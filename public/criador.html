@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Criar Currículo - MyCurrículo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-slate-950 text-slate-100">
+    <!-- HEADER -->
+    <header
+      class="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-20"
+    >
+      <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+  <img
+  src="logo-mycurriculo.svg"
+  alt="MyCurriculo - Crie seu currículo profissional em PDF"
+  class="h-12 sm:h-13"
+    />
+</div>
+        <nav class="hidden md:flex items-center gap-6 text-sm text-slate-300">
+          <a href="index.html" class="hover:text-white">Home</a>
+          <a href="criador.html" class="hover:text-white">Criador</a>
+          <a href="sobre.html" class="hover:text-white">Sobre</a>
+          <a href="suporte.html" class="hover:text-white">Suporte</a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- MAIN -->
+    <main class="max-w-6xl mx-auto px-4 py-10">
+      <h1 class="text-2xl font-semibold mb-2">Criar Currículo</h1>
+      <p class="text-slate-300 mb-6">
+        Preencha as informações abaixo. Seu currículo será montado
+        automaticamente à direita.
+      </p>
+
+      <div class="grid lg:grid-cols-2 gap-8">
+        <!-- FORMULÁRIO -->
+        <div class="space-y-6">
+          <!-- 1. Dados pessoais -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+            <h2 class="font-semibold mb-3 text-sm tracking-wide text-slate-200">
+              1. Dados Pessoais
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+              <div>
+                <label class="block mb-1">Nome completo*</label>
+                <input
+                  id="nome"
+                  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs"
+                  type="text"
+                  placeholder="Ex: Ana Souza"
+                />
+              </div>
+              <div>
+                <label class="block mb-1">E-mail*</label>
+                <input
+                  id="email"
+                  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs"
+                  type="email"
+                  placeholder="seuemail@exemplo.com"
+                />
+              </div>
+              <div>
+                <label class="block mb-1">Telefone</label>
+                <input
+                  id="telefone"
+                  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs"
+                  type="text"
+                  placeholder="(00) 00000-0000"
+                />
+              </div>
+              <div>
+                <label class="block mb-1">Cidade</label>
+                <input
+                  id="cidade"
+                  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs"
+                  type="text"
+                  placeholder="São Paulo"
+                />
+              </div>
+              <div>
+                <label class="block mb-1">Estado</label>
+                <input
+                  id="estado"
+                  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs"
+                  type="text"
+                  placeholder="SP"
+                />
+              </div>
+              <div>
+                <label class="block mb-1">LinkedIn</label>
+                <input
+                  id="linkedin"
+                  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs"
+                  type="text"
+                  placeholder="https://linkedin.com/in/seu-perfil"
+                />
+              </div>
+              <div>
+                <label class="block mb-1">Site / Portfólio</label>
+                <input
+                  id="site"
+                  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs"
+                  type="text"
+                  placeholder="https://seuportfolio.com"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Objetivo Profissional + IA -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+            <h2 class="font-semibold mb-3 text-sm tracking-wide text-slate-200">
+              2. Objetivo Profissional
+            </h2>
+
+            <div class="flex items-center justify-between gap-2 mb-2">
+              <p class="text-xs text-slate-400">
+                Escreva seu objetivo ou, se preferir, use a opção de
+                <span class="text-indigo-300">Gerar com IA</span>.
+              </p>
+              <button
+                id="btn-ia-objetivo"
+                type="button"
+                class="px-3 py-1 rounded-full border border-indigo-500 text-[11px] text-indigo-200 hover:bg-indigo-500/10"
+              >
+                 ✨ Gerar com IA
+              </button>
+            </div>
+
+            <textarea
+              id="objetivo"
+              class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs h-24"
+              placeholder="Descreva em poucas linhas seu objetivo profissional."
+            ></textarea>
+          </div>
+
+          <!-- 3. Experiências -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+            <h2 class="font-semibold mb-3 text-sm tracking-wide text-slate-200">
+              3. Experiência Profissional
+            </h2>
+            <p class="text-xs text-slate-400 mb-3">
+              Preencha apenas os campos que fizerem sentido. Máximo de 3
+              experiências.
+            </p>
+            <div id="experiencias-form" class="space-y-4 text-xs"></div>
+            <button
+              id="add-experiencia"
+              class="mt-2 px-3 py-1 rounded-full border border-slate-700 text-[11px] hover:bg-slate-800"
+              type="button"
+            >
+              + Adicionar experiência
+            </button>
+          </div>
+
+          <!-- 4. Formação -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+            <h2 class="font-semibold mb-3 text-sm tracking-wide text-slate-200">
+              4. Formação Acadêmica
+            </h2>
+            <div id="formacao-form" class="space-y-4 text-xs"></div>
+            <button
+              id="add-formacao"
+              class="mt-2 px-3 py-1 rounded-full border border-slate-700 text-[11px] hover:bg-slate-800"
+              type="button"
+            >
+              + Adicionar formação
+            </button>
+          </div>
+
+          <!-- 5. Habilidades -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+            <h2 class="font-semibold mb-3 text-sm tracking-wide text-slate-200">
+              5. Habilidades
+            </h2>
+            <p class="text-xs text-slate-400 mb-2">
+              Separe as habilidades por vírgula. Ex: Comunicação, Excel,
+              Inglês...
+            </p>
+            <textarea
+              id="habilidades"
+              class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs h-20"
+            ></textarea>
+          </div>
+
+          <!-- 6. Idiomas -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+            <h2 class="font-semibold mb-3 text-sm tracking-wide text-slate-200">
+              6. Idiomas
+            </h2>
+            <div id="idiomas-form" class="space-y-4 text-xs"></div>
+            <button
+              id="add-idioma"
+              class="mt-2 px-3 py-1 rounded-full border border-slate-700 text-[11px] hover:bg-slate-800"
+              type="button"
+            >
+              + Adicionar idioma
+            </button>
+          </div>
+
+          <!-- 7. Cursos -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+            <h2 class="font-semibold mb-3 text-sm tracking-wide text-slate-200">
+              7. Cursos adicionais
+            </h2>
+            <div id="cursos-form" class="space-y-4 text-xs"></div>
+            <button
+              id="add-curso"
+              class="mt-2 px-3 py-1 rounded-full border border-slate-700 text-[11px] hover:bg-slate-800"
+              type="button"
+            >
+              + Adicionar curso
+            </button>
+          </div>
+
+          <!-- Template + CTA -->
+          <div class="flex items-center justify-between gap-4">
+            <div class="text-xs text-slate-400">
+              <label class="block mb-1">Modelo de currículo</label>
+              <select
+                id="template"
+                class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs"
+              >
+                <option value="claro">Modelo Limpo Claro</option>
+                <option value="escuro">Modelo Escuro Minimalista</option>
+              </select>
+            </div>
+            <button
+              id="btn-gerar"
+              class="px-5 py-2 rounded-full bg-indigo-500 hover:bg-indigo-400 text-white text-sm font-semibold"
+              type="button"
+            >
+              Gerar Currículo em PDF
+            </button>
+          </div>
+          <p id="msg-erro" class="text-xs text-red-400 mt-2"></p>
+        </div>
+
+        <!-- PREVIEW -->
+        <div>
+          <div
+            class="bg-slate-900 border border-slate-800 rounded-2xl p-5 lg:sticky lg:top-24"
+          >
+            <p class="text-xs text-slate-400 mb-3">Pré-visualização do currículo</p>
+            <div
+              id="preview"
+              class="bg-slate-950 border border-slate-800 rounded-xl p-4 text-[11px] leading-tight"
+            >
+              <p class="text-slate-500 text-center">
+                Comece preenchendo os campos ao lado para ver seu currículo aqui.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Modal IA Objetivo -->
+    <div
+      id="modal-ia-objetivo"
+      class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50"
+    >
+      <div
+        class="bg-slate-900 border border-slate-700 rounded-2xl p-5 w-full max-w-md text-xs"
+      >
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-semibold text-slate-100">
+           Gerar Objetivo com IA
+          </h3>
+          <button
+            id="fechar-modal-ia"
+            class="text-slate-400 hover:text-slate-200 text-base"
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+
+        <p class="text-[11px] text-slate-400 mb-3">
+          Responda rapidamente às perguntas abaixo e a IA irá montar um objetivo
+          profissional claro, direto e alinhado à vaga.
+        </p>
+
+        <div class="space-y-2">
+          <div>
+            <label class="block mb-1">Cargo pretendido*</label>
+            <input
+              id="ia-cargo"
+              type="text"
+              class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1"
+              placeholder="Ex: Analista de Marketing Pleno"
+            />
+          </div>
+          <div>
+            <label class="block mb-1">Área de atuação</label>
+            <input
+              id="ia-area"
+              type="text"
+              class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1"
+              placeholder="Ex: Marketing Digital, Tecnologia, Financeiro..."
+            />
+          </div>
+          <div>
+            <label class="block mb-1">Nível de senioridade</label>
+            <input
+              id="ia-nivel"
+              type="text"
+              class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1"
+              placeholder="Ex: Júnior, Pleno, Sênior"
+            />
+          </div>
+          <div>
+            <label class="block mb-1">Tempo de experiência</label>
+            <input
+              id="ia-experiencia"
+              type="text"
+              class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1"
+              placeholder="Ex: 2 anos na área, 6 meses em estágio..."
+            />
+          </div>
+          <div>
+            <label class="block mb-1">Pontos extras para destacar</label>
+            <textarea
+              id="ia-extras"
+              class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 h-16"
+              placeholder="Ex: foco em resultados, boa comunicação, experiência com liderança..."
+            ></textarea>
+          </div>
+        </div>
+
+        <p id="ia-objetivo-msg" class="text-[11px] text-slate-300 mt-2"></p>
+
+        <div class="mt-4 flex justify-end gap-2">
+          <button
+            id="cancelar-ia"
+            type="button"
+            class="px-3 py-1 rounded-full border border-slate-600 text-slate-300 hover:bg-slate-800"
+          >
+            Cancelar
+          </button>
+          <button
+            id="confirmar-ia"
+            type="button"
+            class="px-4 py-1 rounded-full bg-indigo-500 hover:bg-indigo-400 text-white font-semibold"
+          >
+            Gerar Objetivo
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+      // ---------- BLOCO: COMPONENTES DINÂMICOS ----------
+      function createExperienciaBlock(idx) {
+        return `
+          <div class="border border-slate-800 rounded-lg p-3 space-y-2" data-exp="${idx}">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <div>
+                <label class="block mb-1">Cargo</label>
+                <input class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1"
+                  type="text" data-field="cargo" />
+              </div>
+              <div>
+                <label class="block mb-1">Empresa</label>
+                <input class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1"
+                  type="text" data-field="empresa" />
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <div>
+                <label class="block mb-1">Início</label>
+                <input class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1"
+                  type="text" data-field="inicio" placeholder="01/2020" />
+              </div>
+              <div>
+                <label class="block mb-1">Fim</label>
+                <input class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1"
+                  type="text" data-field="fim" placeholder="12/2022 ou Atual" />
+              </div>
+              <div>
+                <label class="block mb-1">Localidade</label>
+                <input class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1"
+                  type="text" data-field="localidade" placeholder="Cidade / Remoto" />
+              </div>
+            </div>
+            <div>
+              <label class="block mb-1">Descrição</label>
+              <textarea class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 h-16"
+                data-field="descricao"></textarea>
+            </div>
+          </div>
+        `;
+      }
+
+      function createFormacaoBlock(idx) {
+        return `
+          <div class="border border-slate-800 rounded-lg p-3 space-y-2" data-form="${idx}">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <div>
+                <label class="block mb-1">Curso</label>
+                <input class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1"
+                  type="text" data-field="curso" />
+              </div>
+              <div>
+                <label class="block mb-1">Instituição</label>
+                <input class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1"
+                  type="text" data-field="instituicao" />
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block mb-1">Início</label>
+                <input class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1"
+                  type="text" data-field="inicio" placeholder="01/2018" />
+              </div>
+              <div>
+                <label class="block mb-1">Fim</label>
+                <input class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1"
+                  type="text" data-field="fim" placeholder="12/2022" />
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      function createIdiomaBlock(idx) {
+        return `
+          <div class="border border-slate-800 rounded-lg p-3 space-y-2" data-idioma="${idx}">
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block mb-1">Idioma</label>
+                <input class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1"
+                  type="text" data-field="nome" placeholder="Inglês" />
+              </div>
+              <div>
+                <label class="block mb-1">Nível</label>
+                <input class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1"
+                  type="text" data-field="nivel" placeholder="Intermediário / Avançado" />
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      function createCursoBlock(idx) {
+        return `
+          <div class="border border-slate-800 rounded-lg p-3 space-y-2" data-curso="${idx}">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <div>
+                <label class="block mb-1">Nome do curso</label>
+                <input class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1"
+                  type="text" data-field="nome" />
+              </div>
+              <div>
+                <label class="block mb-1">Instituição</label>
+                <input class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1"
+                  type="text" data-field="instituicao" />
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      const expContainer = document.getElementById('experiencias-form');
+      const formacaoContainer = document.getElementById('formacao-form');
+      const idiomasContainer = document.getElementById('idiomas-form');
+      const cursosContainer = document.getElementById('cursos-form');
+      const preview = document.getElementById('preview');
+      const msgErro = document.getElementById('msg-erro');
+
+      let expCount = 0;
+      let formCount = 0;
+      let idiomaCount = 0;
+      let cursoCount = 0;
+
+      function initBlocks() {
+        expContainer.innerHTML = createExperienciaBlock(expCount++);
+        formacaoContainer.innerHTML = createFormacaoBlock(formCount++);
+        idiomasContainer.innerHTML = createIdiomaBlock(idiomaCount++);
+        cursosContainer.innerHTML = createCursoBlock(cursoCount++);
+      }
+      initBlocks();
+
+      document
+        .getElementById('add-experiencia')
+        .addEventListener('click', () => {
+          if (expCount >= 3) return;
+          expContainer.insertAdjacentHTML(
+            'beforeend',
+            createExperienciaBlock(expCount++)
+          );
+          updatePreview();
+        });
+
+      document.getElementById('add-formacao').addEventListener('click', () => {
+        if (formCount >= 3) return;
+        formacaoContainer.insertAdjacentHTML(
+          'beforeend',
+          createFormacaoBlock(formCount++)
+        );
+        updatePreview();
+      });
+
+      document.getElementById('add-idioma').addEventListener('click', () => {
+        if (idiomaCount >= 4) return;
+        idiomasContainer.insertAdjacentHTML(
+          'beforeend',
+          createIdiomaBlock(idiomaCount++)
+        );
+        updatePreview();
+      });
+
+      document.getElementById('add-curso').addEventListener('click', () => {
+        if (cursoCount >= 4) return;
+        cursosContainer.insertAdjacentHTML(
+          'beforeend',
+          createCursoBlock(cursoCount++)
+        );
+        updatePreview();
+      });
+
+      // ---------- CAPTURAR DADOS DO FORMULÁRIO ----------
+      function getFormData() {
+        const dadosPessoais = {
+          nome: document.getElementById('nome').value.trim(),
+          email: document.getElementById('email').value.trim(),
+          telefone: document.getElementById('telefone').value.trim(),
+          cidade: document.getElementById('cidade').value.trim(),
+          estado: document.getElementById('estado').value.trim(),
+          linkedin: document.getElementById('linkedin').value.trim(),
+          site: document.getElementById('site').value.trim()
+        };
+
+        const objetivo = {
+          texto: document.getElementById('objetivo').value.trim()
+        };
+
+        const experiencias = Array.from(
+          expContainer.querySelectorAll('[data-exp]')
+        ).map((el) => {
+          const obj = {};
+          el.querySelectorAll('[data-field]').forEach((input) => {
+            obj[input.dataset.field] = input.value.trim();
+          });
+          return obj;
+        });
+
+        const formacao = Array.from(
+          formacaoContainer.querySelectorAll('[data-form]')
+        ).map((el) => {
+          const obj = {};
+          el.querySelectorAll('[data-field]').forEach((input) => {
+            obj[input.dataset.field] = input.value.trim();
+          });
+          return obj;
+        });
+
+        const habilidadesText = document
+          .getElementById('habilidades')
+          .value.split(',')
+          .map((h) => h.trim())
+          .filter(Boolean);
+
+        const idiomas = Array.from(
+          idiomasContainer.querySelectorAll('[data-idioma]')
+        ).map((el) => {
+          const obj = {};
+          el.querySelectorAll('[data-field]').forEach((input) => {
+            obj[input.dataset.field] = input.value.trim();
+          });
+          return obj;
+        });
+
+        const cursos = Array.from(
+          cursosContainer.querySelectorAll('[data-curso]')
+        ).map((el) => {
+          const obj = {};
+          el.querySelectorAll('[data-field]').forEach((input) => {
+            obj[input.dataset.field] = input.value.trim();
+          });
+          return obj;
+        });
+
+        return {
+          dadosPessoais,
+          objetivo,
+          experiencias,
+          formacao,
+          habilidades: habilidadesText,
+          idiomas,
+          cursos,
+          template: document.getElementById('template').value
+        };
+      }
+
+      // ---------- RENDER PREVIEW ----------
+      function renderPreview() {
+        const {
+          dadosPessoais,
+          objetivo,
+          experiencias,
+          formacao,
+          habilidades,
+          idiomas,
+          cursos
+        } = getFormData();
+
+        if (!dadosPessoais.nome && !dadosPessoais.email) {
+          preview.innerHTML =
+            '<p class="text-slate-500 text-center">Comece preenchendo os campos ao lado para ver seu currículo aqui.</p>';
+          return;
+        }
+
+        let html = '';
+
+        html += `<div class="border-b border-slate-800 pb-2 mb-2">
+            <h2 class="text-sm font-semibold text-slate-100">${dadosPessoais.nome ||
+              ''}</h2>
+            <p class="text-[10px] text-slate-400">
+              ${[dadosPessoais.cidade, dadosPessoais.estado]
+                .filter(Boolean)
+                .join(' / ')} • ${dadosPessoais.email || ''} ${
+          dadosPessoais.telefone ? '• ' + dadosPessoais.telefone : ''
+        }
+            </p>`;
+
+        if (dadosPessoais.linkedin || dadosPessoais.site) {
+          html += `<p class="text-[10px] text-slate-500 mt-1">
+              ${[dadosPessoais.linkedin, dadosPessoais.site]
+                .filter(Boolean)
+                .join(' • ')}
+            </p>`;
+        }
+        html += `</div>`;
+
+        if (objetivo.texto) {
+          html += `<div class="mb-2">
+              <h3 class="text-[11px] font-semibold text-indigo-300 mb-1">Objetivo Profissional</h3>
+              <p class="text-[10px] text-slate-300">${objetivo.texto}</p>
+            </div>`;
+        }
+
+        if (experiencias.some((e) => e.cargo)) {
+          html += `<div class="mb-2">
+              <h3 class="text-[11px] font-semibold text-indigo-300 mb-1">Experiência Profissional</h3>`;
+          experiencias.forEach((exp) => {
+            if (!exp.cargo) return;
+            html += `<div class="mb-1">
+                  <p class="text-[10px] text-slate-100 font-semibold">${
+                    exp.cargo
+                  } – ${exp.empresa || ''}</p>
+                  <p class="text-[9px] text-slate-400">${
+                    exp.inicio || ''
+                  } - ${exp.fim || 'Atual'} ${
+              exp.localidade ? '• ' + exp.localidade : ''
+            }</p>`;
+            if (exp.descricao) {
+              html += `<p class="text-[10px] text-slate-300 mt-0.5">${exp.descricao}</p>`;
+            }
+            html += `</div>`;
+          });
+          html += `</div>`;
+        }
+
+        if (formacao.some((f) => f.curso)) {
+          html += `<div class="mb-2">
+              <h3 class="text-[11px] font-semibold text-indigo-300 mb-1">Formação Acadêmica</h3>`;
+          formacao.forEach((f) => {
+            if (!f.curso) return;
+            html += `<div class="mb-1">
+                  <p class="text-[10px] text-slate-100 font-semibold">${f.curso} – ${f.instituicao ||
+              ''}</p>
+                  <p class="text-[9px] text-slate-400">${f.inicio ||
+                    ''} - ${f.fim || ''}</p>
+                </div>`;
+          });
+          html += `</div>`;
+        }
+
+        if (habilidades.length) {
+          html += `<div class="mb-2">
+              <h3 class="text-[11px] font-semibold text-indigo-300 mb-1">Habilidades</h3>
+              <p class="text-[10px] text-slate-300">${habilidades.join(
+                ' • '
+              )}</p>
+            </div>`;
+        }
+
+        if (idiomas.some((i) => i.nome)) {
+          html += `<div class="mb-2">
+              <h3 class="text-[11px] font-semibold text-indigo-300 mb-1">Idiomas</h3>`;
+          idiomas.forEach((i) => {
+            if (!i.nome) return;
+            html += `<p class="text-[10px] text-slate-300">${i.nome} – ${i.nivel ||
+              ''}</p>`;
+          });
+          html += `</div>`;
+        }
+
+        if (cursos.some((c) => c.nome)) {
+          html += `<div class="mb-2">
+              <h3 class="text-[11px] font-semibold text-indigo-300 mb-1">Cursos Complementares</h3>`;
+          cursos.forEach((c) => {
+            if (!c.nome) return;
+            html += `<p class="text-[10px] text-slate-300">${c.nome} – ${c.instituicao ||
+              ''}</p>`;
+          });
+          html += `</div>`;
+        }
+
+        preview.innerHTML = html;
+      }
+
+      function updatePreview() {
+        renderPreview();
+      }
+
+      document.addEventListener('input', (e) => {
+        if (
+          e.target.closest('#experiencias-form') ||
+          e.target.closest('#formacao-form') ||
+          e.target.closest('#idiomas-form') ||
+          e.target.closest('#cursos-form') ||
+          e.target.id === 'nome' ||
+          e.target.id === 'email' ||
+          e.target.id === 'telefone' ||
+          e.target.id === 'cidade' ||
+          e.target.id === 'estado' ||
+          e.target.id === 'linkedin' ||
+          e.target.id === 'site' ||
+          e.target.id === 'objetivo' ||
+          e.target.id === 'habilidades'
+        ) {
+          updatePreview();
+        }
+      });
+
+      // ---------- ENVIO PARA PAGAMENTO ----------
+      document.getElementById('btn-gerar').addEventListener('click', async () => {
+        msgErro.textContent = '';
+        const data = getFormData();
+
+        if (!data.dadosPessoais.nome || !data.dadosPessoais.email) {
+          msgErro.textContent = 'Preencha pelo menos nome e e-mail para continuar.';
+          return;
+        }
+
+        try {
+          const response = await createOrder(data);
+          window.location.href = `pagamento.html?orderId=${response.orderId}`;
+        } catch (err) {
+          msgErro.textContent = err.message || 'Erro ao criar pedido.';
+        }
+      });
+
+      // ===== IA Objetivo =====
+      const btnIaObjetivo = document.getElementById('btn-ia-objetivo');
+      const modalIa = document.getElementById('modal-ia-objetivo');
+      const fecharModalIa = document.getElementById('fechar-modal-ia');
+      const cancelarIa = document.getElementById('cancelar-ia');
+      const confirmarIa = document.getElementById('confirmar-ia');
+
+      const iaCargo = document.getElementById('ia-cargo');
+      const iaArea = document.getElementById('ia-area');
+      const iaNivel = document.getElementById('ia-nivel');
+      const iaExperiencia = document.getElementById('ia-experiencia');
+      const iaExtras = document.getElementById('ia-extras');
+      const iaMsg = document.getElementById('ia-objetivo-msg');
+      const campoObjetivo = document.getElementById('objetivo');
+
+      function abrirModalIa() {
+        iaMsg.textContent = '';
+        iaMsg.className = 'text-[11px] text-slate-300 mt-2';
+        modalIa.classList.remove('hidden');
+        modalIa.classList.add('flex');
+      }
+
+      function fecharModal() {
+        modalIa.classList.add('hidden');
+        modalIa.classList.remove('flex');
+      }
+
+      if (btnIaObjetivo) btnIaObjetivo.addEventListener('click', abrirModalIa);
+      if (fecharModalIa) fecharModalIa.addEventListener('click', fecharModal);
+      if (cancelarIa) cancelarIa.addEventListener('click', fecharModal);
+
+      if (confirmarIa) {
+        confirmarIa.addEventListener('click', async () => {
+          iaMsg.textContent = '';
+
+          const cargo = iaCargo.value.trim();
+          const area = iaArea.value.trim();
+          const nivel = iaNivel.value.trim();
+          const experiencia = iaExperiencia.value.trim();
+          const pontosExtras = iaExtras.value.trim();
+
+          if (!cargo) {
+            iaMsg.textContent = 'Informe pelo menos o cargo pretendido.';
+            iaMsg.classList.remove('text-slate-300');
+            iaMsg.classList.add('text-red-400');
+            return;
+          }
+
+          iaMsg.textContent = 'Gerando objetivo com IA...';
+          iaMsg.classList.remove('text-red-400');
+          iaMsg.classList.add('text-slate-300');
+
+          try {
+            const res = await fetch('/api/ia/objetivo', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                cargo,
+                area,
+                nivel,
+                experiencia,
+                pontosExtras
+              })
+            });
+
+            const data = await res.json();
+            console.log('Resposta IA objetivo:', data);
+
+            if (!res.ok) {
+              throw new Error(data.error || 'Erro ao gerar objetivo com IA.');
+            }
+
+            // Tenta descobrir o texto em vários formatos possíveis
+            let texto =
+              (data &&
+                (data.texto || // { texto: "..." }
+                  data.objetivo || // { objetivo: "..." }
+                  data.objective || // { objective: "..." }
+                  data.result || // { result: "..." }
+                  data.response || // { response: "..." }
+                  (data.choices &&
+                    data.choices[0] &&
+                    (data.choices[0].text ||
+                      (data.choices[0].message &&
+                        data.choices[0].message.content))) || // estilo OpenAI
+                  (typeof data === 'string' ? data : ''))) ||
+              'Profissional em busca de oportunidade alinhada ao cargo informado.';
+
+            texto = texto.trim();
+
+            campoObjetivo.value = texto;
+            updatePreview(); // atualiza o preview com novo objetivo
+
+            iaMsg.textContent = 'Objetivo gerado com sucesso!';
+            iaMsg.classList.remove('text-red-400');
+            iaMsg.classList.add('text-emerald-400');
+          } catch (err) {
+            console.error(err);
+            iaMsg.textContent =
+              err.message ||
+              'Não foi possível gerar o objetivo com IA. Tente novamente em instantes.';
+            iaMsg.classList.remove('text-slate-300');
+            iaMsg.classList.add('text-red-400');
+          }
+        });
+      }
+
+      // Render inicial
+      updatePreview();
+    </script>
+  </body>
+</html>
+

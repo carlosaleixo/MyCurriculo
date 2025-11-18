@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Pagamento - MyCurrículo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-slate-950 text-slate-100">
+    <header
+      class="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-20"
+    >
+      <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+         <div class="flex items-center gap-2">
+  <img
+  src="logo-mycurriculo.svg"
+  alt="MyCurriculo - Crie seu currículo profissional em PDF"
+  class="h-12 sm:h-13"
+  />
+</div>
+        <nav class="hidden md:flex items-center gap-6 text-sm text-slate-300">
+          <a href="index.html" class="hover:text-white">Home</a>
+          <a href="criador.html" class="hover:text-white">Criador</a>
+          <a href="sobre.html" class="hover:text-white">Sobre</a>
+          <a href="suporte.html" class="hover:text-white">Suporte</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="max-w-xl mx-auto px-4 py-12">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+        <h1 class="text-xl font-semibold mb-2">
+          Seu currículo está pronto! 🎉
+        </h1>
+        <p class="text-slate-300 mb-4 text-sm">
+          Para baixar o PDF, finalize o pagamento de forma 100% segura.
+        </p>
+
+        <div
+          class="mb-4 text-sm bg-slate-950 border border-slate-800 rounded-xl p-4"
+        >
+          <p class="font-semibold text-slate-100 mb-2">Resumo do pedido</p>
+          <p id="order-id" class="text-slate-400 text-xs mb-1"></p>
+          <p class="text-slate-200">
+            Valor:
+            <span id="order-price" class="font-semibold text-indigo-300"></span>
+          </p>
+        </div>
+
+        <!-- Selos de confiança -->
+        <div class="flex items-center gap-2 mb-4 text-[10px] text-slate-400">
+          <span class="px-2 py-1 rounded-full border border-slate-700">
+            🔒 Pagamento seguro
+          </span>
+          <span class="px-2 py-1 rounded-full border border-slate-700">
+            🔁 Atualize seu currículo quando quiser
+          </span>
+        </div>
+
+        <!-- Botão de pagamento -->
+        <button
+          id="btn-pagar"
+          class="w-full mb-2 px-4 py-3 rounded-full bg-indigo-500 hover:bg-indigo-400 text-white font-semibold text-sm"
+        >
+          Finalizar Pagamento
+        </button>
+        <p class="text-[10px] text-slate-400 mb-2">
+          Ao clicar em “Finalizar Pagamento”, você será redirecionado para uma
+          página de checkout segura (Stripe). Após a confirmação, volte a esta
+          página para liberar o download.
+        </p>
+
+        <p id="msg" class="text-xs text-slate-300 mt-2"></p>
+
+        <div class="mt-6 border-t border-slate-800 pt-4 text-[11px] text-slate-400">
+          <p class="font-semibold mb-1">Como funciona?</p>
+          <ul class="list-disc list-inside space-y-1">
+            <li>Você já montou o currículo na etapa anterior.</li>
+            <li>Agora realiza o pagamento do download.</li>
+            <li>Após confirmado, o link para baixar o PDF é liberado.</li>
+          </ul>
+        </div>
+
+        <div class="mt-4 text-[10px] text-slate-500">
+          Em produção, a confirmação de pagamento é feita automaticamente por
+          meio de webhooks fornecidos pelo gateway de pagamento, garantindo que o
+          PDF só possa ser baixado após a aprovação.
+        </div>
+      </div>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const orderId = params.get('orderId');
+      const status = params.get('status'); // success ou cancel, vindo do Stripe
+      const msg = document.getElementById('msg');
+      const priceEl = document.getElementById('order-price');
+      const orderEl = document.getElementById('order-id');
+      const btnPagar = document.getElementById('btn-pagar');
+
+      if (!orderId) {
+        msg.textContent =
+          'ID do pedido não encontrado. Volte ao criador e tente novamente.';
+        btnPagar.disabled = true;
+      } else {
+        orderEl.textContent = 'Pedido nº ' + orderId;
+
+        getOrder(orderId)
+          .then((order) => {
+            const priceFormatted = order.price
+              ? order.price.toLocaleString('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL'
+                })
+              : 'R$ 0,00';
+            priceEl.textContent = priceFormatted;
+
+            if (order.paid) {
+              msg.textContent =
+                'Pagamento confirmado! Seu currículo está pronto para download.';
+              createDownloadButton();
+            } else {
+              if (status === 'success') {
+                msg.textContent =
+                  'Estamos aguardando a confirmação do pagamento. Atualize esta página em alguns instantes.';
+              } else if (status === 'cancel') {
+                msg.textContent =
+                  'Pagamento cancelado. Você pode tentar novamente clicando no botão abaixo.';
+              }
+            }
+          })
+          .catch(() => {
+            msg.textContent = 'Pedido não encontrado.';
+            btnPagar.disabled = true;
+          });
+      }
+
+      function createDownloadButton() {
+        const downloadBtn = document.createElement('button');
+        downloadBtn.textContent = 'Baixar Currículo em PDF';
+        downloadBtn.className =
+          'w-full mt-3 px-4 py-3 rounded-full bg-emerald-500 hover:bg-emerald-400 text-white font-semibold text-sm';
+        downloadBtn.addEventListener('click', () => downloadPdf(orderId));
+        btnPagar.insertAdjacentElement('afterend', downloadBtn);
+      }
+
+      btnPagar.addEventListener('click', async () => {
+        msg.textContent = '';
+        if (!orderId) return;
+
+        try {
+          const data = await createCheckoutSession(orderId);
+
+          if (data.alreadyPaid) {
+            msg.textContent =
+              'Pagamento já confirmado. Seu link de download foi liberado.';
+            createDownloadButton();
+            return;
+          }
+
+          if (data.checkoutUrl) {
+            // Redireciona para o Stripe Checkout
+            window.location.href = data.checkoutUrl;
+          } else {
+            msg.textContent =
+              'Não foi possível iniciar o pagamento. Tente novamente mais tarde.';
+          }
+        } catch (err) {
+          msg.textContent =
+            err.message ||
+            'Erro ao processar pagamento. Tente novamente em instantes.';
+        }
+      });
+    </script>
+  </body>
+</html>
