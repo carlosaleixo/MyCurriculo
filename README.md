@@ -1,4 +1,4 @@
-# Currículo em Minutos
+# MyCurrículo
 
 Gerador de currículos profissional com:
 
