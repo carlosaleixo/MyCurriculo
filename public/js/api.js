@@ -1,6 +1,6 @@
 // /public/js/api.js
 
-const API_BASE = ''; // relativo à mesma origem
+const API_BASE = 'https://mycurriculo-backend.onrender.com'; // relativo à mesma origem
 
 async function createOrder(payload) {
   const res = await fetch(`${API_BASE}/api/create-order`, {
