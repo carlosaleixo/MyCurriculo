@@ -13,12 +13,12 @@
     >
       <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
         <div class="flex items-center gap-2">
-  <img
-  src="logo-mycurriculo.svg"
-  alt="MyCurriculo - Crie seu currículo profissional em PDF"
-  class="h-12 sm:h-13"
-    />
-</div>
+          <img
+            src="logo-mycurriculo.svg"
+            alt="MyCurriculo - Crie seu currículo profissional em PDF"
+            class="h-12 sm:h-13"
+          />
+        </div>
         <nav class="hidden md:flex items-center gap-6 text-sm text-slate-300">
           <a href="index.html" class="hover:text-white">Home</a>
           <a href="criador.html" class="hover:text-white">Criador</a>
@@ -127,7 +127,7 @@
                 type="button"
                 class="px-3 py-1 rounded-full border border-indigo-500 text-[11px] text-indigo-200 hover:bg-indigo-500/10"
               >
-                 ✨ Gerar com IA
+                ✨ Gerar com AI
               </button>
             </div>
 
@@ -245,13 +245,16 @@
           <div
             class="bg-slate-900 border border-slate-800 rounded-2xl p-5 lg:sticky lg:top-24"
           >
-            <p class="text-xs text-slate-400 mb-3">Pré-visualização do currículo</p>
+            <p class="text-xs text-slate-400 mb-3">
+              Pré-visualização do currículo
+            </p>
             <div
               id="preview"
               class="bg-slate-950 border border-slate-800 rounded-xl p-4 text-[11px] leading-tight"
             >
               <p class="text-slate-500 text-center">
-                Comece preenchendo os campos ao lado para ver seu currículo aqui.
+                Comece preenchendo os campos ao lado para ver seu currículo
+                aqui.
               </p>
             </div>
           </div>
@@ -269,7 +272,7 @@
       >
         <div class="flex items-center justify-between mb-3">
           <h3 class="text-sm font-semibold text-slate-100">
-           Gerar Objetivo com IA
+            Gerar Objetivo com IA
           </h3>
           <button
             id="fechar-modal-ia"
@@ -353,11 +356,15 @@
       </div>
     </div>
 
-    <script src="js/api.js"></script>
+    <!-- JS: primeiro a API (onde está API_BASE e createOrder), depois o script da página -->
+    <script src="js/api.js" defer></script>
     <script>
-      // ---------- BLOCO: COMPONENTES DINÂMICOS ----------
-      function createExperienciaBlock(idx) {
-        return `
+      document.addEventListener('DOMContentLoaded', () => {
+        console.log('criador.html script carregado');
+
+        // ---------- BLOCO: COMPONENTES DINÂMICOS ----------
+        function createExperienciaBlock(idx) {
+          return `
           <div class="border border-slate-800 rounded-lg p-3 space-y-2" data-exp="${idx}">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
               <div>
@@ -395,10 +402,10 @@
             </div>
           </div>
         `;
-      }
+        }
 
-      function createFormacaoBlock(idx) {
-        return `
+        function createFormacaoBlock(idx) {
+          return `
           <div class="border border-slate-800 rounded-lg p-3 space-y-2" data-form="${idx}">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
               <div>
@@ -426,10 +433,10 @@
             </div>
           </div>
         `;
-      }
+        }
 
-      function createIdiomaBlock(idx) {
-        return `
+        function createIdiomaBlock(idx) {
+          return `
           <div class="border border-slate-800 rounded-lg p-3 space-y-2" data-idioma="${idx}">
             <div class="grid grid-cols-2 gap-2">
               <div>
@@ -445,10 +452,10 @@
             </div>
           </div>
         `;
-      }
+        }
 
-      function createCursoBlock(idx) {
-        return `
+        function createCursoBlock(idx) {
+          return `
           <div class="border border-slate-800 rounded-lg p-3 space-y-2" data-curso="${idx}">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
               <div>
@@ -464,410 +471,436 @@
             </div>
           </div>
         `;
-      }
+        }
 
-      const expContainer = document.getElementById('experiencias-form');
-      const formacaoContainer = document.getElementById('formacao-form');
-      const idiomasContainer = document.getElementById('idiomas-form');
-      const cursosContainer = document.getElementById('cursos-form');
-      const preview = document.getElementById('preview');
-      const msgErro = document.getElementById('msg-erro');
+        const expContainer = document.getElementById('experiencias-form');
+        const formacaoContainer = document.getElementById('formacao-form');
+        const idiomasContainer = document.getElementById('idiomas-form');
+        const cursosContainer = document.getElementById('cursos-form');
+        const preview = document.getElementById('preview');
+        const msgErro = document.getElementById('msg-erro');
 
-      let expCount = 0;
-      let formCount = 0;
-      let idiomaCount = 0;
-      let cursoCount = 0;
+        let expCount = 0;
+        let formCount = 0;
+        let idiomaCount = 0;
+        let cursoCount = 0;
 
-      function initBlocks() {
-        expContainer.innerHTML = createExperienciaBlock(expCount++);
-        formacaoContainer.innerHTML = createFormacaoBlock(formCount++);
-        idiomasContainer.innerHTML = createIdiomaBlock(idiomaCount++);
-        cursosContainer.innerHTML = createCursoBlock(cursoCount++);
-      }
-      initBlocks();
+        function initBlocks() {
+          expContainer.innerHTML = createExperienciaBlock(expCount++);
+          formacaoContainer.innerHTML = createFormacaoBlock(formCount++);
+          idiomasContainer.innerHTML = createIdiomaBlock(idiomaCount++);
+          cursosContainer.innerHTML = createCursoBlock(cursoCount++);
+        }
+        initBlocks();
 
-      document
-        .getElementById('add-experiencia')
-        .addEventListener('click', () => {
-          if (expCount >= 3) return;
-          expContainer.insertAdjacentHTML(
+        document
+          .getElementById('add-experiencia')
+          .addEventListener('click', () => {
+            if (expCount >= 3) return;
+            expContainer.insertAdjacentHTML(
+              'beforeend',
+              createExperienciaBlock(expCount++)
+            );
+            updatePreview();
+          });
+
+        document
+          .getElementById('add-formacao')
+          .addEventListener('click', () => {
+            if (formCount >= 3) return;
+            formacaoContainer.insertAdjacentHTML(
+              'beforeend',
+              createFormacaoBlock(formCount++)
+            );
+            updatePreview();
+          });
+
+        document.getElementById('add-idioma').addEventListener('click', () => {
+          if (idiomaCount >= 4) return;
+          idiomasContainer.insertAdjacentHTML(
             'beforeend',
-            createExperienciaBlock(expCount++)
+            createIdiomaBlock(idiomaCount++)
           );
           updatePreview();
         });
 
-      document.getElementById('add-formacao').addEventListener('click', () => {
-        if (formCount >= 3) return;
-        formacaoContainer.insertAdjacentHTML(
-          'beforeend',
-          createFormacaoBlock(formCount++)
-        );
-        updatePreview();
-      });
-
-      document.getElementById('add-idioma').addEventListener('click', () => {
-        if (idiomaCount >= 4) return;
-        idiomasContainer.insertAdjacentHTML(
-          'beforeend',
-          createIdiomaBlock(idiomaCount++)
-        );
-        updatePreview();
-      });
-
-      document.getElementById('add-curso').addEventListener('click', () => {
-        if (cursoCount >= 4) return;
-        cursosContainer.insertAdjacentHTML(
-          'beforeend',
-          createCursoBlock(cursoCount++)
-        );
-        updatePreview();
-      });
-
-      // ---------- CAPTURAR DADOS DO FORMULÁRIO ----------
-      function getFormData() {
-        const dadosPessoais = {
-          nome: document.getElementById('nome').value.trim(),
-          email: document.getElementById('email').value.trim(),
-          telefone: document.getElementById('telefone').value.trim(),
-          cidade: document.getElementById('cidade').value.trim(),
-          estado: document.getElementById('estado').value.trim(),
-          linkedin: document.getElementById('linkedin').value.trim(),
-          site: document.getElementById('site').value.trim()
-        };
-
-        const objetivo = {
-          texto: document.getElementById('objetivo').value.trim()
-        };
-
-        const experiencias = Array.from(
-          expContainer.querySelectorAll('[data-exp]')
-        ).map((el) => {
-          const obj = {};
-          el.querySelectorAll('[data-field]').forEach((input) => {
-            obj[input.dataset.field] = input.value.trim();
-          });
-          return obj;
+        document.getElementById('add-curso').addEventListener('click', () => {
+          if (cursoCount >= 4) return;
+          cursosContainer.insertAdjacentHTML(
+            'beforeend',
+            createCursoBlock(cursoCount++)
+          );
+          updatePreview();
         });
 
-        const formacao = Array.from(
-          formacaoContainer.querySelectorAll('[data-form]')
-        ).map((el) => {
-          const obj = {};
-          el.querySelectorAll('[data-field]').forEach((input) => {
-            obj[input.dataset.field] = input.value.trim();
+        // ---------- CAPTURAR DADOS DO FORMULÁRIO ----------
+        function getFormData() {
+          const dadosPessoais = {
+            nome: document.getElementById('nome').value.trim(),
+            email: document.getElementById('email').value.trim(),
+            telefone: document.getElementById('telefone').value.trim(),
+            cidade: document.getElementById('cidade').value.trim(),
+            estado: document.getElementById('estado').value.trim(),
+            linkedin: document.getElementById('linkedin').value.trim(),
+            site: document.getElementById('site').value.trim()
+          };
+
+          const objetivo = {
+            texto: document.getElementById('objetivo').value.trim()
+          };
+
+          const experiencias = Array.from(
+            expContainer.querySelectorAll('[data-exp]')
+          ).map((el) => {
+            const obj = {};
+            el.querySelectorAll('[data-field]').forEach((input) => {
+              obj[input.dataset.field] = input.value.trim();
+            });
+            return obj;
           });
-          return obj;
-        });
 
-        const habilidadesText = document
-          .getElementById('habilidades')
-          .value.split(',')
-          .map((h) => h.trim())
-          .filter(Boolean);
-
-        const idiomas = Array.from(
-          idiomasContainer.querySelectorAll('[data-idioma]')
-        ).map((el) => {
-          const obj = {};
-          el.querySelectorAll('[data-field]').forEach((input) => {
-            obj[input.dataset.field] = input.value.trim();
+          const formacao = Array.from(
+            formacaoContainer.querySelectorAll('[data-form]')
+          ).map((el) => {
+            const obj = {};
+            el.querySelectorAll('[data-field]').forEach((input) => {
+              obj[input.dataset.field] = input.value.trim();
+            });
+            return obj;
           });
-          return obj;
-        });
 
-        const cursos = Array.from(
-          cursosContainer.querySelectorAll('[data-curso]')
-        ).map((el) => {
-          const obj = {};
-          el.querySelectorAll('[data-field]').forEach((input) => {
-            obj[input.dataset.field] = input.value.trim();
+          const habilidadesText = document
+            .getElementById('habilidades')
+            .value.split(',')
+            .map((h) => h.trim())
+            .filter(Boolean);
+
+          const idiomas = Array.from(
+            idiomasContainer.querySelectorAll('[data-idioma]')
+          ).map((el) => {
+            const obj = {};
+            el.querySelectorAll('[data-field]').forEach((input) => {
+              obj[input.dataset.field] = input.value.trim();
+            });
+            return obj;
           });
-          return obj;
-        });
 
-        return {
-          dadosPessoais,
-          objetivo,
-          experiencias,
-          formacao,
-          habilidades: habilidadesText,
-          idiomas,
-          cursos,
-          template: document.getElementById('template').value
-        };
-      }
+          const cursos = Array.from(
+            cursosContainer.querySelectorAll('[data-curso]')
+          ).map((el) => {
+            const obj = {};
+            el.querySelectorAll('[data-field]').forEach((input) => {
+              obj[input.dataset.field] = input.value.trim();
+            });
+            return obj;
+          });
 
-      // ---------- RENDER PREVIEW ----------
-      function renderPreview() {
-        const {
-          dadosPessoais,
-          objetivo,
-          experiencias,
-          formacao,
-          habilidades,
-          idiomas,
-          cursos
-        } = getFormData();
-
-        if (!dadosPessoais.nome && !dadosPessoais.email) {
-          preview.innerHTML =
-            '<p class="text-slate-500 text-center">Comece preenchendo os campos ao lado para ver seu currículo aqui.</p>';
-          return;
+          return {
+            dadosPessoais,
+            objetivo,
+            experiencias,
+            formacao,
+            habilidades: habilidadesText,
+            idiomas,
+            cursos,
+            template: document.getElementById('template').value
+          };
         }
 
-        let html = '';
+        // ---------- RENDER PREVIEW ----------
+        function renderPreview() {
+          const {
+            dadosPessoais,
+            objetivo,
+            experiencias,
+            formacao,
+            habilidades,
+            idiomas,
+            cursos
+          } = getFormData();
 
-        html += `<div class="border-b border-slate-800 pb-2 mb-2">
+          if (!dadosPessoais.nome && !dadosPessoais.email) {
+            preview.innerHTML =
+              '<p class="text-slate-500 text-center">Comece preenchendo os campos ao lado para ver seu currículo aqui.</p>';
+            return;
+          }
+
+          let html = '';
+
+          html += `<div class="border-b border-slate-800 pb-2 mb-2">
             <h2 class="text-sm font-semibold text-slate-100">${dadosPessoais.nome ||
               ''}</h2>
             <p class="text-[10px] text-slate-400">
               ${[dadosPessoais.cidade, dadosPessoais.estado]
                 .filter(Boolean)
                 .join(' / ')} • ${dadosPessoais.email || ''} ${
-          dadosPessoais.telefone ? '• ' + dadosPessoais.telefone : ''
-        }
+            dadosPessoais.telefone ? '• ' + dadosPessoais.telefone : ''
+          }
             </p>`;
 
-        if (dadosPessoais.linkedin || dadosPessoais.site) {
-          html += `<p class="text-[10px] text-slate-500 mt-1">
+          if (dadosPessoais.linkedin || dadosPessoais.site) {
+            html += `<p class="text-[10px] text-slate-500 mt-1">
               ${[dadosPessoais.linkedin, dadosPessoais.site]
                 .filter(Boolean)
                 .join(' • ')}
             </p>`;
-        }
-        html += `</div>`;
+          }
+          html += `</div>`;
 
-        if (objetivo.texto) {
-          html += `<div class="mb-2">
+          if (objetivo.texto) {
+            html += `<div class="mb-2">
               <h3 class="text-[11px] font-semibold text-indigo-300 mb-1">Objetivo Profissional</h3>
               <p class="text-[10px] text-slate-300">${objetivo.texto}</p>
             </div>`;
-        }
+          }
 
-        if (experiencias.some((e) => e.cargo)) {
-          html += `<div class="mb-2">
+          if (experiencias.some((e) => e.cargo)) {
+            html += `<div class="mb-2">
               <h3 class="text-[11px] font-semibold text-indigo-300 mb-1">Experiência Profissional</h3>`;
-          experiencias.forEach((exp) => {
-            if (!exp.cargo) return;
-            html += `<div class="mb-1">
+            experiencias.forEach((exp) => {
+              if (!exp.cargo) return;
+              html += `<div class="mb-1">
                   <p class="text-[10px] text-slate-100 font-semibold">${
                     exp.cargo
                   } – ${exp.empresa || ''}</p>
                   <p class="text-[9px] text-slate-400">${
                     exp.inicio || ''
                   } - ${exp.fim || 'Atual'} ${
-              exp.localidade ? '• ' + exp.localidade : ''
-            }</p>`;
-            if (exp.descricao) {
-              html += `<p class="text-[10px] text-slate-300 mt-0.5">${exp.descricao}</p>`;
-            }
+                exp.localidade ? '• ' + exp.localidade : ''
+              }</p>`;
+              if (exp.descricao) {
+                html += `<p class="text-[10px] text-slate-300 mt-0.5">${exp.descricao}</p>`;
+              }
+              html += `</div>`;
+            });
             html += `</div>`;
-          });
-          html += `</div>`;
-        }
+          }
 
-        if (formacao.some((f) => f.curso)) {
-          html += `<div class="mb-2">
+          if (formacao.some((f) => f.curso)) {
+            html += `<div class="mb-2">
               <h3 class="text-[11px] font-semibold text-indigo-300 mb-1">Formação Acadêmica</h3>`;
-          formacao.forEach((f) => {
-            if (!f.curso) return;
-            html += `<div class="mb-1">
+            formacao.forEach((f) => {
+              if (!f.curso) return;
+              html += `<div class="mb-1">
                   <p class="text-[10px] text-slate-100 font-semibold">${f.curso} – ${f.instituicao ||
-              ''}</p>
+                ''}</p>
                   <p class="text-[9px] text-slate-400">${f.inicio ||
                     ''} - ${f.fim || ''}</p>
                 </div>`;
-          });
-          html += `</div>`;
-        }
+            });
+            html += `</div>`;
+          }
 
-        if (habilidades.length) {
-          html += `<div class="mb-2">
+          if (habilidades.length) {
+            html += `<div class="mb-2">
               <h3 class="text-[11px] font-semibold text-indigo-300 mb-1">Habilidades</h3>
               <p class="text-[10px] text-slate-300">${habilidades.join(
                 ' • '
               )}</p>
             </div>`;
-        }
-
-        if (idiomas.some((i) => i.nome)) {
-          html += `<div class="mb-2">
-              <h3 class="text-[11px] font-semibold text-indigo-300 mb-1">Idiomas</h3>`;
-          idiomas.forEach((i) => {
-            if (!i.nome) return;
-            html += `<p class="text-[10px] text-slate-300">${i.nome} – ${i.nivel ||
-              ''}</p>`;
-          });
-          html += `</div>`;
-        }
-
-        if (cursos.some((c) => c.nome)) {
-          html += `<div class="mb-2">
-              <h3 class="text-[11px] font-semibold text-indigo-300 mb-1">Cursos Complementares</h3>`;
-          cursos.forEach((c) => {
-            if (!c.nome) return;
-            html += `<p class="text-[10px] text-slate-300">${c.nome} – ${c.instituicao ||
-              ''}</p>`;
-          });
-          html += `</div>`;
-        }
-
-        preview.innerHTML = html;
-      }
-
-      function updatePreview() {
-        renderPreview();
-      }
-
-      document.addEventListener('input', (e) => {
-        if (
-          e.target.closest('#experiencias-form') ||
-          e.target.closest('#formacao-form') ||
-          e.target.closest('#idiomas-form') ||
-          e.target.closest('#cursos-form') ||
-          e.target.id === 'nome' ||
-          e.target.id === 'email' ||
-          e.target.id === 'telefone' ||
-          e.target.id === 'cidade' ||
-          e.target.id === 'estado' ||
-          e.target.id === 'linkedin' ||
-          e.target.id === 'site' ||
-          e.target.id === 'objetivo' ||
-          e.target.id === 'habilidades'
-        ) {
-          updatePreview();
-        }
-      });
-
-      // ---------- ENVIO PARA PAGAMENTO ----------
-      document.getElementById('btn-gerar').addEventListener('click', async () => {
-        msgErro.textContent = '';
-        const data = getFormData();
-
-        if (!data.dadosPessoais.nome || !data.dadosPessoais.email) {
-          msgErro.textContent = 'Preencha pelo menos nome e e-mail para continuar.';
-          return;
-        }
-
-        try {
-          const response = await createOrder(data);
-          window.location.href = `pagamento.html?orderId=${response.orderId}`;
-        } catch (err) {
-          msgErro.textContent = err.message || 'Erro ao criar pedido.';
-        }
-      });
-
-      // ===== IA Objetivo =====
-      const btnIaObjetivo = document.getElementById('btn-ia-objetivo');
-      const modalIa = document.getElementById('modal-ia-objetivo');
-      const fecharModalIa = document.getElementById('fechar-modal-ia');
-      const cancelarIa = document.getElementById('cancelar-ia');
-      const confirmarIa = document.getElementById('confirmar-ia');
-
-      const iaCargo = document.getElementById('ia-cargo');
-      const iaArea = document.getElementById('ia-area');
-      const iaNivel = document.getElementById('ia-nivel');
-      const iaExperiencia = document.getElementById('ia-experiencia');
-      const iaExtras = document.getElementById('ia-extras');
-      const iaMsg = document.getElementById('ia-objetivo-msg');
-      const campoObjetivo = document.getElementById('objetivo');
-
-      function abrirModalIa() {
-        iaMsg.textContent = '';
-        iaMsg.className = 'text-[11px] text-slate-300 mt-2';
-        modalIa.classList.remove('hidden');
-        modalIa.classList.add('flex');
-      }
-
-      function fecharModal() {
-        modalIa.classList.add('hidden');
-        modalIa.classList.remove('flex');
-      }
-
-      if (btnIaObjetivo) btnIaObjetivo.addEventListener('click', abrirModalIa);
-      if (fecharModalIa) fecharModalIa.addEventListener('click', fecharModal);
-      if (cancelarIa) cancelarIa.addEventListener('click', fecharModal);
-
-      if (confirmarIa) {
-        confirmarIa.addEventListener('click', async () => {
-          iaMsg.textContent = '';
-
-          const cargo = iaCargo.value.trim();
-          const area = iaArea.value.trim();
-          const nivel = iaNivel.value.trim();
-          const experiencia = iaExperiencia.value.trim();
-          const pontosExtras = iaExtras.value.trim();
-
-          if (!cargo) {
-            iaMsg.textContent = 'Informe pelo menos o cargo pretendido.';
-            iaMsg.classList.remove('text-slate-300');
-            iaMsg.classList.add('text-red-400');
-            return;
           }
 
-          iaMsg.textContent = 'Gerando objetivo com IA...';
-          iaMsg.classList.remove('text-red-400');
-          iaMsg.classList.add('text-slate-300');
-
-          try {
-            const res = await fetch('/api/ia/objetivo', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                cargo,
-                area,
-                nivel,
-                experiencia,
-                pontosExtras
-              })
+          if (idiomas.some((i) => i.nome)) {
+            html += `<div class="mb-2">
+              <h3 class="text-[11px] font-semibold text-indigo-300 mb-1">Idiomas</h3>`;
+            idiomas.forEach((i) => {
+              if (!i.nome) return;
+              html += `<p class="text-[10px] text-slate-300">${i.nome} – ${i.nivel ||
+                ''}</p>`;
             });
+            html += `</div>`;
+          }
 
-            const data = await res.json();
-            console.log('Resposta IA objetivo:', data);
+          if (cursos.some((c) => c.nome)) {
+            html += `<div class="mb-2">
+              <h3 class="text-[11px] font-semibold text-indigo-300 mb-1">Cursos Complementares</h3>`;
+            cursos.forEach((c) => {
+              if (!c.nome) return;
+              html += `<p class="text-[10px] text-slate-300">${c.nome} – ${c.instituicao ||
+                ''}</p>`;
+            });
+            html += `</div>`;
+          }
 
-            if (!res.ok) {
-              throw new Error(data.error || 'Erro ao gerar objetivo com IA.');
-            }
+          preview.innerHTML = html;
+        }
 
-            // Tenta descobrir o texto em vários formatos possíveis
-            let texto =
-              (data &&
-                (data.texto || // { texto: "..." }
-                  data.objetivo || // { objetivo: "..." }
-                  data.objective || // { objective: "..." }
-                  data.result || // { result: "..." }
-                  data.response || // { response: "..." }
-                  (data.choices &&
-                    data.choices[0] &&
-                    (data.choices[0].text ||
-                      (data.choices[0].message &&
-                        data.choices[0].message.content))) || // estilo OpenAI
-                  (typeof data === 'string' ? data : ''))) ||
-              'Profissional em busca de oportunidade alinhada ao cargo informado.';
+        function updatePreview() {
+          renderPreview();
+        }
 
-            texto = texto.trim();
-
-            campoObjetivo.value = texto;
-            updatePreview(); // atualiza o preview com novo objetivo
-
-            iaMsg.textContent = 'Objetivo gerado com sucesso!';
-            iaMsg.classList.remove('text-red-400');
-            iaMsg.classList.add('text-emerald-400');
-          } catch (err) {
-            console.error(err);
-            iaMsg.textContent =
-              err.message ||
-              'Não foi possível gerar o objetivo com IA. Tente novamente em instantes.';
-            iaMsg.classList.remove('text-slate-300');
-            iaMsg.classList.add('text-red-400');
+        document.addEventListener('input', (e) => {
+          if (
+            e.target.closest('#experiencias-form') ||
+            e.target.closest('#formacao-form') ||
+            e.target.closest('#idiomas-form') ||
+            e.target.closest('#cursos-form') ||
+            e.target.id === 'nome' ||
+            e.target.id === 'email' ||
+            e.target.id === 'telefone' ||
+            e.target.id === 'cidade' ||
+            e.target.id === 'estado' ||
+            e.target.id === 'linkedin' ||
+            e.target.id === 'site' ||
+            e.target.id === 'objetivo' ||
+            e.target.id === 'habilidades'
+          ) {
+            updatePreview();
           }
         });
-      }
 
-      // Render inicial
-      updatePreview();
+        // ---------- ENVIO PARA PAGAMENTO ----------
+        const btnGerar = document.getElementById('btn-gerar');
+        if (btnGerar) {
+          btnGerar.addEventListener('click', async () => {
+            msgErro.textContent = '';
+            const data = getFormData();
+
+            if (!data.dadosPessoais.nome || !data.dadosPessoais.email) {
+              msgErro.textContent =
+                'Preencha pelo menos nome e e-mail para continuar.';
+              return;
+            }
+
+            try {
+              // createOrder vem do js/api.js e usa API_BASE
+              const response = await createOrder(data);
+              console.log('Pedido criado:', response);
+              window.location.href = `pagamento.html?orderId=${response.orderId}`;
+            } catch (err) {
+              console.error('Erro ao criar pedido:', err);
+              msgErro.textContent =
+                err.message || 'Erro ao criar pedido. Tente novamente.';
+            }
+          });
+        } else {
+          console.error('Botão #btn-gerar não encontrado');
+        }
+
+        // ===== IA Objetivo =====
+        const btnIaObjetivo = document.getElementById('btn-ia-objetivo');
+        const modalIa = document.getElementById('modal-ia-objetivo');
+        const fecharModalIa = document.getElementById('fechar-modal-ia');
+        const cancelarIa = document.getElementById('cancelar-ia');
+        const confirmarIa = document.getElementById('confirmar-ia');
+
+        const iaCargo = document.getElementById('ia-cargo');
+        const iaArea = document.getElementById('ia-area');
+        const iaNivel = document.getElementById('ia-nivel');
+        const iaExperiencia = document.getElementById('ia-experiencia');
+        const iaExtras = document.getElementById('ia-extras');
+        const iaMsg = document.getElementById('ia-objetivo-msg');
+        const campoObjetivo = document.getElementById('objetivo');
+
+        function abrirModalIa() {
+          iaMsg.textContent = '';
+          iaMsg.className = 'text-[11px] text-slate-300 mt-2';
+          modalIa.classList.remove('hidden');
+          modalIa.classList.add('flex');
+        }
+
+        function fecharModal() {
+          modalIa.classList.add('hidden');
+          modalIa.classList.remove('flex');
+        }
+
+        if (btnIaObjetivo) btnIaObjetivo.addEventListener('click', abrirModalIa);
+        if (fecharModalIa) fecharModalIa.addEventListener('click', fecharModal);
+        if (cancelarIa) cancelarIa.addEventListener('click', fecharModal);
+
+        if (confirmarIa) {
+          confirmarIa.addEventListener('click', async () => {
+            iaMsg.textContent = '';
+
+            const cargo = iaCargo.value.trim();
+            const area = iaArea.value.trim();
+            const nivel = iaNivel.value.trim();
+            const experiencia = iaExperiencia.value.trim();
+            const pontosExtras = iaExtras.value.trim();
+
+            if (!cargo) {
+              iaMsg.textContent = 'Informe pelo menos o cargo pretendido.';
+              iaMsg.classList.remove('text-slate-300');
+              iaMsg.classList.add('text-red-400');
+              return;
+            }
+
+            iaMsg.textContent = 'Gerando objetivo com IA...';
+            iaMsg.classList.remove('text-red-400');
+            iaMsg.classList.add('text-slate-300');
+
+            try {
+              // Usa API_BASE se existir, senão tenta caminho relativo (para ambiente local com backend na mesma origem)
+              const iaUrl =
+                typeof API_BASE !== 'undefined'
+                  ? `${API_BASE}/api/ia/objetivo`
+                  : '/api/ia/objetivo';
+
+              const res = await fetch(iaUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  cargo,
+                  area,
+                  nivel,
+                  experiencia,
+                  pontosExtras
+                })
+              });
+
+              let data;
+              try {
+                data = await res.json();
+              } catch (e) {
+                console.error('Resposta não é JSON válido:', e);
+                throw new Error(
+                  'Resposta inválida da IA. Verifique se o backend está configurado corretamente.'
+                );
+              }
+
+              console.log('Resposta IA objetivo:', data);
+
+              if (!res.ok) {
+                throw new Error(data.error || 'Erro ao gerar objetivo com IA.');
+              }
+
+              let texto =
+                (data &&
+                  (data.texto || // { texto: "..." }
+                    data.objetivo || // { objetivo: "..." }
+                    data.objective || // { objective: "..." }
+                    data.result || // { result: "..." }
+                    data.response || // { response: "..." }
+                    (data.choices &&
+                      data.choices[0] &&
+                      (data.choices[0].text ||
+                        (data.choices[0].message &&
+                          data.choices[0].message.content))) || // estilo OpenAI
+                    (typeof data === 'string' ? data : ''))) ||
+                'Profissional em busca de oportunidade alinhada ao cargo informado.';
+
+              texto = texto.trim();
+
+              campoObjetivo.value = texto;
+              updatePreview(); // atualiza o preview com novo objetivo
+
+              iaMsg.textContent = 'Objetivo gerado com sucesso!';
+              iaMsg.classList.remove('text-red-400');
+              iaMsg.classList.add('text-emerald-400');
+            } catch (err) {
+              console.error(err);
+              iaMsg.textContent =
+                err.message ||
+                'Não foi possível gerar o objetivo com IA. Tente novamente em instantes.';
+              iaMsg.classList.remove('text-slate-300');
+              iaMsg.classList.add('text-red-400');
+            }
+          });
+        }
+
+        // Render inicial
+        updatePreview();
+      });
     </script>
   </body>
 </html>
-

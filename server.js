@@ -32,6 +32,32 @@ const PORT = process.env.PORT || 3000;
 
 const app = express();
 
+const allowedOrigins = [
+  'http://localhost:3000',              // quando você está testando local
+  'https://my-curriculo-xe5a.vercel.app' // quando estiver usando o site na Vercel
+];
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      // Permite requisições sem origin (ex: curl, Postman)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error('Origin não permitido pelo CORS'));
+    },
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
+);
+
+// importante: manter também
+app.use(express.json());
+
+
 /**
  * 1) WEBHOOK DO STRIPE
  *    Precisa do corpo "raw" ANTES do express.json().
@@ -595,7 +621,12 @@ app.get('/api/order/:id/pdf', async (req, res) => {
 });
 
 /**
- * IA: Gerar texto de objetivo profissional com Llama (Ollama)
+ * IA: Gerar texto de objetivo profissional com Groq (Llama 3)
+ * Endpoint chamado pelo criador.html: POST /api/ia/objetivo
+ */
+
+/**
+ * IA: Gerar texto de objetivo profissional com Groq (Llama 3)
  * Endpoint chamado pelo criador.html: POST /api/ia/objetivo
  */
 app.post('/api/ia/objetivo', async (req, res) => {
@@ -603,15 +634,22 @@ app.post('/api/ia/objetivo', async (req, res) => {
     const {
       cargo,
       area,
-      senioridade,
-      anos,
-      destaques,
+      nivel,
+      experiencia,
+      pontosExtras,
       tipoVaga
     } = req.body || {};
 
     if (!cargo) {
       return res.status(400).json({
         error: 'Informe pelo menos o cargo desejado.'
+      });
+    }
+
+    if (!process.env.GROQ_API_KEY) {
+      console.error('GROQ_API_KEY não configurada no .env');
+      return res.status(500).json({
+        error: 'IA ainda não está configurada no servidor.'
       });
     }
 
@@ -622,44 +660,44 @@ com tom profissional, entre 2 e 4 frases.
 Use os dados abaixo:
 - Cargo desejado: ${cargo || ''}
 - Área / segmento: ${area || ''}
-- Nível de senioridade: ${senioridade || ''}
-- Tempo de experiência: ${anos || ''}
+- Nível de senioridade: ${nivel || ''}
+- Tempo de experiência: ${experiencia || ''}
 - Tipo de vaga: ${tipoVaga || ''}
-- Pontos para destacar: ${destaques || ''}
+- Pontos para destacar: ${pontosExtras || ''}
 
 Entregue APENAS o texto do objetivo, sem títulos ou marcadores.
-`;
+    `;
 
-    // Chamada ao Ollama (Llama) rodando localmente em http://localhost:11434
-    const ollamaResponse = await fetch('http://localhost:11434/api/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'llama3.2', // mesmo modelo que você puxou com "ollama pull"
-        prompt,
-        stream: false
-      })
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      messages: [
+        {
+          role: 'system',
+          content:
+            'Você escreve objetivos profissionais curtos, claros e objetivos para currículos em português do Brasil.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: 0.6,
+      max_tokens: 200
     });
 
-    if (!ollamaResponse.ok) {
-      const errText = await ollamaResponse.text();
-      console.error('Erro da Ollama:', errText);
-      return res
-        .status(500)
-        .json({ error: 'Erro ao gerar objetivo com IA (Ollama).' });
-    }
-
-    const data = await ollamaResponse.json();
-    const texto = (data.response || '').trim();
+    const texto =
+      completion.choices?.[0]?.message?.content?.trim() ||
+      'Profissional em busca de novas oportunidades.';
 
     return res.json({ texto });
   } catch (err) {
-    console.error('Erro na rota /api/ia/objetivo:', err);
+    console.error('Erro na rota /api/ia/objetivo (Groq):', err);
     return res.status(500).json({
       error: 'Erro interno ao gerar objetivo com IA.'
     });
   }
 });
+
 
 
 /**
