@@ -1,6 +1,8 @@
 // /public/js/api.js
 
-const API_BASE = ''; // relativo à mesma origem
+const API_BASE_URL =
+  window.API_BASE_URL ||
+  'http://localhost:3000'; // para rodar local com o backend local
 
 async function createOrder(payload) {
   const res = await fetch(`${API_BASE}/api/create-order`, {
