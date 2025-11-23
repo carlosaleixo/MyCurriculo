@@ -838,10 +838,15 @@
 
             try {
               // Usa API_BASE se existir, senão tenta caminho relativo (para ambiente local com backend na mesma origem)
-              const iaUrl =
-                typeof API_BASE !== 'undefined'
-                  ? `${API_BASE}/api/ia/objetivo`
-                  : '/api/ia/objetivo';
+             // Decide a base da API para a IA
+              const iaBase =
+                (typeof window !== 'undefined' && window.API_BASE_URL) // produção (Vercel + Render)
+                  || (typeof API_BASE !== 'undefined' ? API_BASE : ''); // dev/local, se existir
+
+              // Se não tiver base definida, usa caminho relativo (para ambiente local com backend na mesma origem)
+              const iaUrl = iaBase
+                ? `${iaBase}/api/ia/objetivo`
+                : '/api/ia/objetivo';
 
               const res = await fetch(iaUrl, {
                 method: 'POST',
