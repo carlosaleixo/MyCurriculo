@@ -29,7 +29,7 @@ const app = express();
 
 const allowedOrigins = [
   'http://localhost:3000',              // quando você está testando local
-  'https://my-curriculo-xe5a.vercel.app' // quando estiver usando o site na Vercel
+  'https://mycurriculo.vercel.app' // quando estiver usando o site na Vercel
 ];
 
 // 0) CORS GLOBAL
