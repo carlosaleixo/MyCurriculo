@@ -13,11 +13,6 @@ const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY
 });
 
-
-
-
-
-
 // ⚠️ IMPORTANTE:
 // Configure estas variáveis no seu .env:
 // MONGODB_URI=mongodb+srv://usuario:senha@cluster/db
@@ -37,6 +32,7 @@ const allowedOrigins = [
   'https://my-curriculo-xe5a.vercel.app' // quando estiver usando o site na Vercel
 ];
 
+// 0) CORS GLOBAL
 app.use(
   cors({
     origin(origin, callback) {
@@ -54,9 +50,7 @@ app.use(
   })
 );
 
-// importante: manter também
-app.use(express.json());
-
+// ⚠️ NÃO usar express.json() aqui em cima antes do webhook!
 
 /**
  * 1) WEBHOOK DO STRIPE
@@ -72,13 +66,15 @@ app.post(
 
     let event;
     try {
+      console.log('🔔 Recebendo webhook do Stripe...');
       event = stripe.webhooks.constructEvent(
         req.body,
         sig,
         process.env.STRIPE_WEBHOOK_SECRET
       );
+      console.log('✅ Webhook verificado:', event.type);
     } catch (err) {
-      console.error('Erro ao verificar webhook Stripe:', err.message);
+      console.error('❌ Erro ao verificar webhook Stripe:', err.message);
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
@@ -86,6 +82,8 @@ app.post(
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
       const orderId = session.metadata?.orderId;
+
+      console.log('🧾 checkout.session.completed para orderId:', orderId);
 
       if (orderId) {
         try {
@@ -98,7 +96,7 @@ app.post(
               paymentSessionId: session.id
             }
           );
-          console.log(`Pedido ${orderId} marcado como pago.`);
+          console.log(`✅ Pedido ${orderId} marcado como pago.`);
         } catch (err) {
           console.error('Erro ao atualizar pedido após webhook:', err);
         }
@@ -110,7 +108,6 @@ app.post(
 );
 
 // 2) MIDDLEWARES "NORMAIS" (depois do webhook)
-app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -123,7 +120,7 @@ mongoose
   .then(() => console.log('✅ Conectado ao MongoDB'))
   .catch((err) => console.error('Erro ao conectar ao MongoDB:', err));
 
-// 4) MODEL DE PEDIDO
+// 4) SCHEMA / MODEL DO PEDIDO
 const orderSchema = new mongoose.Schema(
   {
     orderId: { type: String, unique: true, index: true },
@@ -134,72 +131,69 @@ const orderSchema = new mongoose.Schema(
     paymentProvider: { type: String, default: 'stripe' },
     paymentSessionId: { type: String },
 
-    template: { type: String, default: 'claro' },
+    template: { type: String, default: 'classico' },
     data: {
       dadosPessoais: Object,
       objetivo: Object,
       experiencias: Array,
-      formacao: Array,
+      formacoes: Array,
+      cursos: Array,
       habilidades: Array,
       idiomas: Array,
-      cursos: Array
+      redesSociais: Array,
+      extras: Array
     }
   },
-  { timestamps: true }
+  {
+    timestamps: true
+  }
 );
 
 const Order = mongoose.model('Order', orderSchema);
 
-// Helper para IDs
-const generateId = () =>
-  Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
-
-/**
- * 5) CRIAR PEDIDO (antes do pagamento)
- *    Essa rota salva tudo no DB e devolve orderId + preço.
- */
+// 5) ROTA PARA CRIAR PEDIDO
 app.post('/api/create-order', async (req, res) => {
   try {
     const {
       dadosPessoais,
       objetivo,
       experiencias,
-      formacao,
+      formacoes,
+      cursos,
       habilidades,
       idiomas,
-      cursos,
-      template
+      redesSociais,
+      extras,
+      template,
+      price
     } = req.body;
 
-    if (!dadosPessoais || !dadosPessoais.nome || !dadosPessoais.email) {
-      return res.status(400).json({
-        error: 'Nome e e-mail são obrigatórios.'
-      });
-    }
+    // Gera um ID único amigável
+    const orderId = `ORD-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
 
-    const orderId = generateId();
-    const price = 19.9; // valor configurável
-
-    const order = await Order.create({
+    const order = new Order({
       orderId,
-      price,
-      currency: 'BRL',
-      template: template || 'claro',
+      price: price || 19.9,
+      template: template || 'classico',
       data: {
         dadosPessoais,
         objetivo,
         experiencias,
-        formacao,
+        formacoes,
+        cursos,
         habilidades,
         idiomas,
-        cursos
+        redesSociais,
+        extras
       }
     });
 
-    res.json({
-      orderId: order.orderId,
-      price: order.price,
-      currency: order.currency
+    await order.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Pedido criado com sucesso.',
+      orderId: order.orderId
     });
   } catch (err) {
     console.error('Erro ao criar pedido:', err);
@@ -207,40 +201,38 @@ app.post('/api/create-order', async (req, res) => {
   }
 });
 
-/**
- * 6) PEGAR PEDIDO (para mostrar na página de pagamento)
- */
+// 6) ROTA PARA OBTER DETALHES DO PEDIDO
 app.get('/api/order/:id', async (req, res) => {
   try {
-    const order = await Order.findOne({ orderId: req.params.id }).lean();
-    if (!order) return res.status(404).json({ error: 'Pedido não encontrado.' });
+    const order = await Order.findOne({ orderId: req.params.id });
 
-    res.json({
-      orderId: order.orderId,
-      paid: order.paid,
-      price: order.price,
-      currency: order.currency,
-      paymentStatus: order.paymentStatus
-    });
+    if (!order) {
+      return res.status(404).json({ error: 'Pedido não encontrado.' });
+    }
+
+    res.json(order);
   } catch (err) {
     console.error('Erro ao buscar pedido:', err);
     res.status(500).json({ error: 'Erro ao buscar pedido.' });
   }
 });
 
-
-/**
- * 7) CRIAR SESSÃO DE CHECKOUT DO STRIPE
- *    Só o backend fala com o Stripe. O front apenas recebe a URL de checkout.
- */
+// 7) ROTA PARA CRIAR SESSÃO DE PAGAMENTO (CHECKOUT)
 app.post('/api/order/:id/checkout-session', async (req, res) => {
   try {
     const order = await Order.findOne({ orderId: req.params.id });
-    if (!order) return res.status(404).json({ error: 'Pedido não encontrado.' });
 
+    if (!order) {
+      return res.status(404).json({ error: 'Pedido não encontrado.' });
+    }
+
+    // Se já estiver pago, não precisa criar nova sessão
     if (order.paid) {
-      // já pago: não precisa criar novo checkout
-      return res.json({ alreadyPaid: true });
+      return res.json({
+        success: true,
+        alreadyPaid: true,
+        message: 'Pedido já pago.'
+      });
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -249,13 +241,11 @@ app.post('/api/order/:id/checkout-session', async (req, res) => {
       line_items: [
         {
           price_data: {
-            currency: order.currency.toLowerCase(),
-            unit_amount: Math.round(order.price * 100), // em centavos
+            currency: 'brl',
             product_data: {
-              name: 'Download de Currículo Profissional (PDF)',
-              description:
-                'Currículo gerado automaticamente com base nos seus dados.'
-            }
+              name: 'Currículo Profissional em PDF'
+            },
+            unit_amount: Math.round(order.price * 100) // R$ -> centavos
           },
           quantity: 1
         }
@@ -267,67 +257,39 @@ app.post('/api/order/:id/checkout-session', async (req, res) => {
       cancel_url: `${FRONTEND_BASE_URL}/pagamento.html?orderId=${order.orderId}&status=cancel`
     });
 
-    order.paymentSessionId = session.id;
-    order.paymentProvider = 'stripe';
-    await order.save();
-
     res.json({
+      success: true,
       checkoutUrl: session.url
     });
   } catch (err) {
-    console.error('Erro ao criar sessão de checkout:', err);
+    console.error('Erro ao criar sessão de pagamento:', err);
     res.status(500).json({ error: 'Erro ao criar sessão de pagamento.' });
   }
 });
 
-/**
- * 8) PAINEL ADMIN SIMPLES
- *    Lista pedidos com base em um token de admin via query string (?token=...).
- *    NÃO é autenticação forte, mas já é melhor que nada para um painel interno.
- */
+// 8) PAINEL ADMIN SIMPLES
 app.get('/api/admin/orders', async (req, res) => {
   const token = req.query.token;
-  if (!process.env.ADMIN_TOKEN) {
-    return res.status(500).json({ error: 'ADMIN_TOKEN não configurado.' });
-  }
-  if (!token || token !== process.env.ADMIN_TOKEN) {
+  if (!process.env.ADMIN_TOKEN || token !== process.env.ADMIN_TOKEN) {
     return res.status(401).json({ error: 'Não autorizado.' });
   }
 
   try {
-    const orders = await Order.find()
-      .sort({ createdAt: -1 })
-      .limit(100)
-      .lean();
-
-    const sanitized = orders.map((o) => ({
-      orderId: o.orderId,
-      paid: o.paid,
-      price: o.price,
-      currency: o.currency,
-      paymentStatus: o.paymentStatus,
-      template: o.template,
-      createdAt: o.createdAt,
-      updatedAt: o.updatedAt,
-      nome: o.data?.dadosPessoais?.nome || '',
-      email: o.data?.dadosPessoais?.email || ''
-    }));
-
-    res.json({ orders: sanitized });
+    const orders = await Order.find().sort({ createdAt: -1 }).limit(100);
+    res.json(orders);
   } catch (err) {
-    console.error('Erro ao listar pedidos admin:', err);
+    console.error('Erro ao listar pedidos:', err);
     res.status(500).json({ error: 'Erro ao listar pedidos.' });
   }
 });
 
-/**
- * 9) DOWNLOAD DO PDF – PAYWALL REAL
- *    Só libera se o pedido estiver com paid = true (marcado via webhook).
- */
+// 9) ROTA PARA GERAR / BAIXAR PDF DO CURRÍCULO
 app.get('/api/order/:id/pdf', async (req, res) => {
   try {
     const order = await Order.findOne({ orderId: req.params.id }).lean();
-    if (!order) return res.status(404).json({ error: 'Pedido não encontrado.' });
+    if (!order) {
+      return res.status(404).json({ error: 'Pedido não encontrado.' });
+    }
 
     if (!order.paid) {
       return res.status(403).json({
@@ -355,31 +317,267 @@ app.get('/api/order/:id/pdf', async (req, res) => {
     );
     res.setHeader('Content-type', 'application/pdf');
 
-    const doc = new PDFDocument({
-      margin: 50
-    });
-
+    const doc = new PDFDocument({ margin: 50 });
     doc.pipe(res);
 
-    // ====== CORES E ESTILO BASE ======
-    const isEscuro = order.template === 'escuro';
+    const rawTemplate = order.template || 'classico';
+    const template =
+      rawTemplate === 'classico' || rawTemplate === 'moderno'
+        ? rawTemplate
+        : rawTemplate === 'escuro'
+        ? 'moderno'
+        : 'classico';
 
-    const primaryColor = isEscuro ? '#111827' : '#000000'; // texto principal
-    const sectionTitleColor = isEscuro ? '#111827' : '#000000';
-    const subtleTextColor = isEscuro ? '#4B5563' : '#4B5563';
-    const lineColor = isEscuro ? '#E5E7EB' : '#E5E7EB';
-
-    if (isEscuro) {
-      doc.rect(0, 0, doc.page.width, doc.page.height).fill('#F9FAFB');
-      doc.fillColor(primaryColor);
+    if (template === 'classico') {
+      renderClassic(doc, {
+        dadosPessoais,
+        objetivo,
+        experiencias,
+        formacao,
+        habilidades,
+        idiomas,
+        cursos
+      });
+    } else {
+      renderModern(doc, {
+        dadosPessoais,
+        objetivo,
+        experiencias,
+        formacao,
+        habilidades,
+        idiomas,
+        cursos
+      });
     }
 
-    // ====== CABEÇALHO (NOME + "CARGO") ======
-    const nome = dadosPessoais?.nome || '';
-    // subtítulo: usamos uma versão curta do objetivo ou um placeholder
-    let subTitulo = '';
+    doc.end();
+  } catch (err) {
+    console.error('Erro ao gerar PDF:', err);
+    res.status(500).json({ error: 'Erro ao gerar PDF.' });
+  }
+
+  // =====================
+  //  MODELO CLÁSSICO
+  // =====================
+  function renderClassic(
+    doc,
+    { dadosPessoais, objetivo, experiencias, formacao, habilidades, idiomas, cursos }
+  ) {
+    const primaryColor = '#000000';
+    const subtleText = '#4B5563';
+
+    const nome = dadosPessoais?.nome || 'Nome do Profissional';
+
+    // Cabeçalho centralizado (como na primeira imagem)
+    doc
+      .font('Helvetica-Bold')
+      .fontSize(16)
+      .fillColor(primaryColor)
+      .text(nome, { align: 'center' });
+
+    const linha1 = [];
+    if (dadosPessoais?.cidade || dadosPessoais?.estado) {
+      linha1.push(
+        [dadosPessoais.cidade, dadosPessoais.estado].filter(Boolean).join(' / ')
+      );
+    }
+    if (dadosPessoais?.email) linha1.push(dadosPessoais.email);
+    if (dadosPessoais?.telefone) linha1.push(dadosPessoais.telefone);
+
+    const linha2 = [];
+    if (dadosPessoais?.linkedin) linha2.push(dadosPessoais.linkedin);
+    if (dadosPessoais?.site) linha2.push(dadosPessoais.site);
+
+    doc.moveDown(0.3);
+    if (linha1.length) {
+      doc
+        .font('Helvetica')
+        .fontSize(9)
+        .fillColor(subtleText)
+        .text(linha1.join(' | '), { align: 'center' });
+    }
+    if (linha2.length) {
+      doc
+        .moveDown(0.15)
+        .fontSize(9)
+        .fillColor(subtleText)
+        .text(linha2.join(' | '), { align: 'center' });
+    }
+
+    doc.moveDown(0.8);
+
+    const addSection = (titulo) => {
+      doc
+        .font('Helvetica-Bold')
+        .fontSize(11)
+        .fillColor(primaryColor)
+        .text(titulo.toUpperCase() + ':', { align: 'left' });
+      doc.moveDown(0.2);
+      doc
+        .moveTo(doc.page.margins.left, doc.y)
+        .lineTo(doc.page.width - doc.page.margins.right, doc.y)
+        .lineWidth(0.5)
+        .strokeColor('#9CA3AF')
+        .stroke();
+      doc.moveDown(0.4);
+      doc.font('Helvetica').fontSize(9).fillColor(primaryColor);
+    };
+
+    // Objetivo
     if (objetivo?.texto) {
-      // pega só a primeira frase ou até ~60 caracteres
+      addSection('Objetivo');
+      doc.text(objetivo.texto, { align: 'justify' });
+      doc.moveDown(0.8);
+    }
+
+    // Formação acadêmica
+    if (Array.isArray(formacao) && formacao.length) {
+      addSection('Formação Acadêmica');
+      formacao.forEach((f) => {
+        if (!f.curso && !f.instituicao) return;
+
+        const periodo =
+          f.inicio || f.fim
+            ? [f.inicio, f.fim].filter(Boolean).join(' - ')
+            : '';
+
+        doc
+          .font('Helvetica-Bold')
+          .fontSize(9)
+          .text('• ' + (f.curso || ''), { align: 'left' });
+
+        let linha = '';
+        if (f.instituicao) linha += f.instituicao;
+        if (periodo) linha += (linha ? ' — ' : '') + periodo;
+
+        if (linha) {
+          doc
+            .moveDown(0.1)
+            .font('Helvetica')
+            .fontSize(9)
+            .fillColor(subtleText)
+            .text(linha, { align: 'left' })
+            .fillColor(primaryColor);
+        }
+
+        doc.moveDown(0.4);
+      });
+    }
+
+    // Habilidades e competências
+    if (Array.isArray(habilidades) && habilidades.length) {
+      addSection('Habilidades e Competências');
+      habilidades.forEach((h) => {
+        doc.text('• ' + h, { align: 'left' });
+      });
+      doc.moveDown(0.6);
+    }
+
+    // Experiência profissional
+    if (Array.isArray(experiencias) && experiencias.length) {
+      addSection('Experiência Profissional');
+      experiencias.forEach((exp) => {
+        if (!exp.cargo && !exp.empresa) return;
+
+        const periodo =
+          exp.inicio || exp.fim
+            ? [exp.inicio, exp.fim].filter(Boolean).join(' - ')
+            : '';
+
+        const tituloLinha = [exp.cargo, exp.empresa].filter(Boolean).join(' - ');
+        if (tituloLinha) {
+          doc
+            .font('Helvetica-Bold')
+            .fontSize(9)
+            .fillColor(primaryColor)
+            .text(tituloLinha, { align: 'left' });
+        }
+
+        const linha2 = [];
+        if (exp.localidade) linha2.push(exp.localidade);
+        if (periodo) linha2.push(periodo);
+
+        if (linha2.length) {
+          doc
+            .moveDown(0.1)
+            .font('Helvetica')
+            .fontSize(9)
+            .fillColor(subtleText)
+            .text(linha2.join(' | '), { align: 'left' })
+            .fillColor(primaryColor);
+        }
+
+        if (exp.descricao) {
+          doc
+            .moveDown(0.2)
+            .font('Helvetica')
+            .fontSize(9)
+            .text(exp.descricao, { align: 'justify' });
+        }
+
+        doc.moveDown(0.6);
+      });
+    }
+
+    // Cursos adicionais / informação complementar
+    if (Array.isArray(cursos) && cursos.length) {
+      addSection('Informação Complementar');
+      cursos.forEach((c) => {
+        if (!c.nome && !c.instituicao) return;
+        const linha = [
+          c.nome || '',
+          c.instituicao || '',
+          c.cargaHoraria ? `${c.cargaHoraria}h` : ''
+        ]
+          .filter(Boolean)
+          .join(' — ');
+        doc.text('• ' + linha, { align: 'left' });
+      });
+      doc.moveDown(0.6);
+    }
+
+    // Idiomas
+    if (Array.isArray(idiomas) && idiomas.length) {
+      addSection('Idiomas');
+      idiomas.forEach((idioma) => {
+        if (!idioma.nome) return;
+        const linha = [
+          idioma.nome,
+          idioma.nivel ? `(${idioma.nivel})` : ''
+        ]
+          .filter(Boolean)
+          .join(' ');
+        doc.text('• ' + linha, { align: 'left' });
+      });
+      doc.moveDown(0.6);
+    }
+  }
+
+  // =====================
+  //  MODELO MODERNO
+  // =====================
+  function renderModern(
+    doc,
+    { dadosPessoais, objetivo, experiencias, formacao, habilidades, idiomas, cursos }
+  ) {
+    // cores inspiradas na segunda imagem
+    const primaryColor = '#111827';
+    const subtleTextColor = '#4B5563';
+    const lineColor = '#E5E7EB';
+
+    // Faixa vertical clara à esquerda
+    doc.rect(0, 0, 120, doc.page.height).fill('#F5F7EB');
+    doc.fillColor(primaryColor);
+
+    const contentX = 140;
+    const startY = 60;
+    doc.x = contentX;
+    doc.y = startY;
+
+    const nome = dadosPessoais?.nome || '';
+    let subTitulo = '';
+
+    if (objetivo?.texto) {
       const primeiraFrase = objetivo.texto.split(/[.!?]/)[0];
       subTitulo =
         primeiraFrase.length > 60
@@ -391,11 +589,11 @@ app.get('/api/order/:id/pdf', async (req, res) => {
       .font('Helvetica-Bold')
       .fontSize(20)
       .fillColor(primaryColor)
-      .text(nome.toUpperCase(), { align: 'left' });
+      .text(nome || 'Nome Completo', { align: 'left' });
 
     if (subTitulo) {
       doc
-        .moveDown(0.3)
+        .moveDown(0.2)
         .font('Helvetica')
         .fontSize(11)
         .fillColor(subtleTextColor)
@@ -404,103 +602,133 @@ app.get('/api/order/:id/pdf', async (req, res) => {
 
     doc.moveDown(0.8);
 
-    // ====== LINHA HORIZONTAL ======
-    doc
-      .moveTo(doc.page.margins.left, doc.y)
-      .lineTo(doc.page.width - doc.page.margins.right, doc.y)
-      .lineWidth(1)
-      .strokeColor(lineColor)
-      .stroke();
-
-    doc.moveDown(0.8);
-
-    // ====== LINHA DE CONTATOS (telefone · email · cidade/estado) ======
+    // CONTATO
     const contatos = [];
-
-    if (dadosPessoais?.telefone) contatos.push(dadosPessoais.telefone);
-    if (dadosPessoais?.email) contatos.push(dadosPessoais.email);
-
-    const localParts = [dadosPessoais?.cidade, dadosPessoais?.estado].filter(
-      Boolean
-    );
-    if (localParts.length) contatos.push(localParts.join(' - '));
+    if (dadosPessoais?.email) contatos.push(`Email: ${dadosPessoais.email}`);
+    if (dadosPessoais?.telefone)
+      contatos.push(`Telefone: ${dadosPessoais.telefone}`);
+    if (dadosPessoais?.cidade || dadosPessoais?.estado) {
+      contatos.push(
+        `Endereço: ${[dadosPessoais.cidade, dadosPessoais.estado]
+          .filter(Boolean)
+          .join(' / ')}`
+      );
+    }
 
     if (contatos.length) {
       doc
-        .font('Helvetica')
-        .fontSize(9)
-        .fillColor(subtleTextColor)
-        .text(contatos.join('  ·  '), { align: 'left' });
-    }
+        .font('Helvetica-Bold')
+        .fontSize(10)
+        .fillColor(primaryColor)
+        .text('CONTATO', { align: 'left' });
 
-    if (dadosPessoais?.linkedin || dadosPessoais?.site) {
-      const links = [dadosPessoais.linkedin, dadosPessoais.site]
-        .filter(Boolean)
-        .join('  ·  ');
-      if (links) {
-        doc
-          .moveDown(0.2)
-          .fontSize(9)
-          .fillColor(subtleTextColor)
-          .text(links, { align: 'left' });
+      doc.moveDown(0.2);
+      doc.font('Helvetica').fontSize(9).fillColor(subtleTextColor);
+      contatos.forEach((c) => doc.text(c, { align: 'left' }));
+
+      if (dadosPessoais?.linkedin || dadosPessoais?.site) {
+        const links = [dadosPessoais.linkedin, dadosPessoais.site]
+          .filter(Boolean)
+          .join('  ·  ');
+        if (links) {
+          doc.moveDown(0.1).text(links, { align: 'left' });
+        }
       }
+
+      doc.moveDown(0.8);
     }
 
-    doc.moveDown(1);
-
-    // Helper para títulos de seção no estilo da imagem
     const addSectionTitle = (title) => {
       doc
-        .moveDown(0.5)
+        .moveDown(0.3)
         .font('Helvetica-Bold')
         .fontSize(11)
-        .fillColor(sectionTitleColor)
+        .fillColor(primaryColor)
         .text(title.toUpperCase(), { align: 'left' });
 
       doc
         .moveDown(0.15)
-        .moveTo(doc.page.margins.left, doc.y)
+        .moveTo(contentX, doc.y)
         .lineTo(doc.page.width - doc.page.margins.right, doc.y)
         .lineWidth(0.7)
         .strokeColor(lineColor)
         .stroke();
 
-      doc.moveDown(0.4);
+      doc.moveDown(0.3);
+      doc.font('Helvetica').fontSize(9).fillColor(primaryColor);
     };
 
-    // ====== OBJETIVOS ======
-    if (objetivo && objetivo.texto) {
-      addSectionTitle('Objetivos');
-      doc
-        .font('Helvetica')
-        .fontSize(10)
-        .fillColor(primaryColor)
-        .text(objetivo.texto, {
-          align: 'left'
-        });
-      doc.moveDown(0.8);
+    // OBJETIVO
+    if (objetivo?.texto) {
+      addSectionTitle('Objetivo');
+      doc.text(objetivo.texto, { align: 'left' });
+      doc.moveDown(0.6);
     }
 
-    // ====== FORMAÇÃO ======
-    if (Array.isArray(formacao) && formacao.length) {
-      addSectionTitle('Formação');
+    // EXPERIÊNCIA
+    if (Array.isArray(experiencias) && experiencias.length) {
+      addSectionTitle('Experiência');
+      experiencias.forEach((exp) => {
+        if (!exp.cargo && !exp.empresa) return;
 
-      formacao.forEach((f) => {
-        if (!f.curso) return;
-
-        const periodo = [f.inicio, f.fim].filter(Boolean).join(' - ');
+        const periodo =
+          exp.inicio || exp.fim
+            ? [exp.inicio, exp.fim].filter(Boolean).join(' - ')
+            : '';
 
         doc
           .font('Helvetica-Bold')
           .fontSize(10)
-          .fillColor(primaryColor)
-          .text(
-            `${(f.inicio || '') && (f.fim || '')
-              ? `${f.inicio} - ${f.fim}  |  `
-              : ''
-            }${f.curso}`,
-            { align: 'left' }
-          );
+          .text(exp.cargo || '', { align: 'left' });
+
+        if (exp.empresa) {
+          doc
+            .moveDown(0.1)
+            .font('Helvetica')
+            .fontSize(9)
+            .fillColor(subtleTextColor)
+            .text(exp.empresa, { align: 'left' })
+            .fillColor(primaryColor);
+        }
+
+        if (periodo || exp.localidade) {
+          const linha = [periodo, exp.localidade].filter(Boolean).join('  ·  ');
+          doc
+            .moveDown(0.05)
+            .font('Helvetica')
+            .fontSize(8)
+            .fillColor(subtleTextColor)
+            .text(linha, { align: 'left' })
+            .fillColor(primaryColor);
+        }
+
+        if (exp.descricao) {
+          doc
+            .moveDown(0.15)
+            .font('Helvetica')
+            .fontSize(9)
+            .text(exp.descricao, { align: 'left' });
+        }
+
+        doc.moveDown(0.6);
+      });
+    }
+
+    // EDUCAÇÃO (Formação)
+    if (Array.isArray(formacao) && formacao.length) {
+      addSectionTitle('Educação');
+      formacao.forEach((f) => {
+        if (!f.curso && !f.instituicao) return;
+
+        const periodo =
+          f.inicio || f.fim
+            ? [f.inicio, f.fim].filter(Boolean).join(' - ')
+            : '';
+
+        doc
+          .font('Helvetica-Bold')
+          .fontSize(10)
+          .text(f.curso || '', { align: 'left' });
 
         if (f.instituicao) {
           doc
@@ -508,200 +736,125 @@ app.get('/api/order/:id/pdf', async (req, res) => {
             .font('Helvetica')
             .fontSize(9)
             .fillColor(subtleTextColor)
-            .text(f.instituicao, { align: 'left' });
+            .text(f.instituicao, { align: 'left' })
+            .fillColor(primaryColor);
+        }
+
+        if (periodo) {
+          doc
+            .moveDown(0.05)
+            .font('Helvetica')
+            .fontSize(8)
+            .fillColor(subtleTextColor)
+            .text(periodo, { align: 'left' })
+            .fillColor(primaryColor);
         }
 
         doc.moveDown(0.6);
       });
     }
 
-    // ====== EXPERIÊNCIAS ======
-    if (Array.isArray(experiencias) && experiencias.length) {
-      addSectionTitle('Experiências');
-
-      experiencias.forEach((exp) => {
-        if (!exp.cargo && !exp.empresa) return;
-
-        // linha 1: período | cargo
-        const periodo = [exp.inicio, exp.fim || 'Atual']
-          .filter(Boolean)
-          .join(' - ');
-
-        doc
-          .font('Helvetica-Bold')
-          .fontSize(10)
-          .fillColor(primaryColor)
-          .text(
-            `${periodo ? periodo + '  |  ' : ''}${exp.cargo || ''}`,
-            { align: 'left' }
-          );
-
-        // linha 2: empresa + localidade
-        const empresaLocal = [exp.empresa, exp.localidade]
-          .filter(Boolean)
-          .join(' - ');
-
-        if (empresaLocal) {
-          doc
-            .moveDown(0.1)
-            .font('Helvetica')
-            .fontSize(9)
-            .fillColor(subtleTextColor)
-            .text(empresaLocal, { align: 'left' });
-        }
-
-        // descrição
-        if (exp.descricao) {
-          doc
-            .moveDown(0.2)
-            .font('Helvetica')
-            .fontSize(10)
-            .fillColor(primaryColor)
-            .text(exp.descricao, {
-              align: 'left'
-            });
-        }
-
-        doc.moveDown(0.8);
-      });
-    }
-
-    // ====== HABILIDADES (opcional, no final) ======
+    // HABILIDADES
     if (Array.isArray(habilidades) && habilidades.length) {
       addSectionTitle('Habilidades');
-      doc
-        .font('Helvetica')
-        .fontSize(10)
-        .fillColor(primaryColor)
-        .text(habilidades.join('  •  '), {
-          align: 'left'
-        });
+      habilidades.forEach((h) => {
+        doc.text('• ' + h, { align: 'left' });
+      });
       doc.moveDown(0.6);
     }
 
-    // ====== IDIOMAS ======
+    // CURSOS
+    if (Array.isArray(cursos) && cursos.length) {
+      addSectionTitle('Cursos');
+      cursos.forEach((c) => {
+        if (!c.nome && !c.instituicao) return;
+        const linha = [
+          c.nome || '',
+          c.instituicao || '',
+          c.cargaHoraria ? `${c.cargaHoraria}h` : ''
+        ]
+          .filter(Boolean)
+          .join(' — ');
+        doc.text('• ' + linha, { align: 'left' });
+      });
+      doc.moveDown(0.6);
+    }
+
+    // IDIOMAS
     if (Array.isArray(idiomas) && idiomas.length) {
       addSectionTitle('Idiomas');
       idiomas.forEach((idioma) => {
         if (!idioma.nome) return;
-        doc
-          .font('Helvetica')
-          .fontSize(10)
-          .fillColor(primaryColor)
-          .text(
-            `${idioma.nome}${idioma.nivel ? ' – ' + idioma.nivel : ''}`,
-            { align: 'left' }
-          );
+        const linha = [
+          idioma.nome,
+          idioma.nivel ? `(${idioma.nivel})` : ''
+        ]
+          .filter(Boolean)
+          .join(' ');
+        doc.text('• ' + linha, { align: 'left' });
       });
       doc.moveDown(0.6);
     }
-
-    // ====== CURSOS ======
-    if (Array.isArray(cursos) && cursos.length) {
-      addSectionTitle('Cursos Complementares');
-      cursos.forEach((curso) => {
-        if (!curso.nome) return;
-        doc
-          .font('Helvetica')
-          .fontSize(10)
-          .fillColor(primaryColor)
-          .text(
-            `${curso.nome}${curso.instituicao ? ' – ' + curso.instituicao : ''}`,
-            { align: 'left' }
-          );
-        doc.moveDown(0.3);
-      });
-    }
-
-    doc.end();
-  } catch (err) {
-    console.error('Erro ao gerar PDF:', err);
-    res.status(500).json({ error: 'Erro ao gerar PDF.' });
   }
 });
 
-/**
- * IA: Gerar texto de objetivo profissional com Groq (Llama 3)
- * Endpoint chamado pelo criador.html: POST /api/ia/objetivo
- */
 
-/**
- * IA: Gerar texto de objetivo profissional com Groq (Llama 3)
- * Endpoint chamado pelo criador.html: POST /api/ia/objetivo
- */
+// 10) ROTA DE IA PARA "Objetivo Profissional" (Groq ou OpenAI)
 app.post('/api/ia/objetivo', async (req, res) => {
   try {
-    const {
-      cargo,
-      area,
-      nivel,
-      experiencia,
-      pontosExtras,
-      tipoVaga
-    } = req.body || {};
-
-    if (!cargo) {
-      return res.status(400).json({
-        error: 'Informe pelo menos o cargo desejado.'
-      });
-    }
-
-    if (!process.env.GROQ_API_KEY) {
-      console.error('GROQ_API_KEY não configurada no .env');
-      return res.status(500).json({
-        error: 'IA ainda não está configurada no servidor.'
-      });
-    }
+    const { resumoVaga, cargo, senioridade, area, experiencia, pontosFortes } = req.body;
 
     const prompt = `
-Gere um objetivo profissional em primeira pessoa, em português do Brasil,
-com tom profissional, entre 2 e 4 frases.
+Você é um assistente especializado em criar descrições de "Objetivo Profissional" curtas, claras e profissionais para currículos.
 
-Use os dados abaixo:
-- Cargo desejado: ${cargo || ''}
-- Área / segmento: ${area || ''}
-- Nível de senioridade: ${nivel || ''}
-- Tempo de experiência: ${experiencia || ''}
-- Tipo de vaga: ${tipoVaga || ''}
-- Pontos para destacar: ${pontosExtras || ''}
+Gere um objetivo profissional em português, no máximo 3 linhas, com tom profissional, usando as informações abaixo (use apenas o que fizer sentido):
 
-Entregue APENAS o texto do objetivo, sem títulos ou marcadores.
-    `;
+- Cargo desejado: ${cargo || 'Não informado'}
+- Senioridade: ${senioridade || 'Não informado'}
+- Área de atuação: ${area || 'Não informado'}
+- Experiência resumida: ${experiencia || 'Não informado'}
+- Pontos fortes / habilidades: ${pontosFortes || 'Não informado'}
+- Resumo da vaga ou contexto: ${resumoVaga || 'Não informado'}
+
+Regras:
+- Escreva em primeira pessoa ("Busco...", "Atuar como...").
+- Não use frases genéricas demais.
+- Não repita muitas vezes o mesmo termo.
+- Responda apenas com o texto do objetivo, sem explicações adicionais.
+`;
 
     const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+      model: 'llama-3.1-8b-instant',
       messages: [
-        {
-          role: 'system',
-          content:
-            'Você escreve objetivos profissionais curtos, claros e objetivos para currículos em português do Brasil.'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
+        { role: 'system', content: 'Você é um gerador de objetivos profissionais para currículos.' },
+        { role: 'user', content: prompt }
       ],
-      temperature: 0.6,
+      temperature: 0.7,
       max_tokens: 200
     });
 
-    const texto =
-      completion.choices?.[0]?.message?.content?.trim() ||
-      'Profissional em busca de novas oportunidades.';
+    const objetivoGerado = completion.choices[0]?.message?.content?.trim();
 
-    return res.json({ texto });
+    if (!objetivoGerado) {
+      return res.status(500).json({
+        error: 'Não foi possível gerar o objetivo profissional.'
+      });
+    }
+
+    res.json({
+      success: true,
+      objetivo: objetivoGerado
+    });
   } catch (err) {
     console.error('Erro na rota /api/ia/objetivo (Groq):', err);
-    return res.status(500).json({
-      error: 'Erro interno ao gerar objetivo com IA.'
+    res.status(500).json({
+      error: 'Erro ao gerar objetivo profissional com IA.'
     });
   }
 });
 
-
-
 /**
- * 10) SPA / ROTA CATCH-ALL
+ * 11) SPA / ROTA CATCH-ALL
  *     Mantém comportamento de servir index.html para rotas desconhecidas.
  */
 app.get('*', (req, res) => {
@@ -709,9 +862,10 @@ app.get('*', (req, res) => {
 });
 
 /**
- * 11) HTTPS EM PRODUÇÃO
+ * 12) HTTPS EM PRODUÇÃO
  *     Em produção, use um proxy (Nginx, Caddy, etc.) com HTTPS na frente.
  */
 app.listen(PORT, () => {
   console.log(`Servidor rodando em ${FRONTEND_BASE_URL} (porta ${PORT})`);
 });
+
